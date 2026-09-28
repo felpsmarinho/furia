@@ -84,3 +84,34 @@ window.addEventListener('load', () => {
         if(heroContent) heroContent.classList.add('show');
     }, 100);
 });
+
+// Mobile Menu Logic
+const mobileMenu = document.getElementById('mobile-menu');
+const navMenu = document.getElementById('nav-menu');
+
+if(mobileMenu) {
+    mobileMenu.addEventListener('click', () => {
+        navMenu.classList.toggle('active');
+        const icon = mobileMenu.querySelector('i');
+        if(navMenu.classList.contains('active')) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-xmark');
+        } else {
+            icon.classList.remove('fa-xmark');
+            icon.classList.add('fa-bars');
+        }
+    });
+}
+
+// Close mobile menu when a link is clicked
+const navLinks = document.querySelectorAll('#nav-menu a');
+navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+        if(navMenu.classList.contains('active')) {
+            navMenu.classList.remove('active');
+            const icon = mobileMenu.querySelector('i');
+            icon.classList.remove('fa-xmark');
+            icon.classList.add('fa-bars');
+        }
+    });
+});

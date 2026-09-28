@@ -1,25 +1,35 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fúria Voleibol | Jogue com Intensidade</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Outfit:wght@300;500;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Outfit:wght@300;500;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
     <div id="cursor-glow"></div>
-    
+
     <header class="navbar">
         <div class="logo-container">
-            <img src="public/img/furia_logo.png" alt="Fúria Voleibol Logo" class="logo" onerror="this.src='https://via.placeholder.com/150?text=Furia+Logo'">
+            <img src="public/img/furia_logo.png" alt="Fúria Voleibol Logo" class="logo"
+                onerror="this.src='https://via.placeholder.com/150?text=Furia+Logo'">
             <span class="logo-text">FÚRIA</span>
         </div>
-        <nav>
+        <div class="menu-toggle" id="mobile-menu">
+            <i class="fa-solid fa-bars"></i>
+        </div>
+        <nav id="nav-menu">
             <a href="#hero">Início</a>
             <a href="#spirit">O Espírito</a>
             <a href="#location">Localização</a>
+            <a href="#join">Conheça</a>
+            <a href="#contact">Contato</a>
         </nav>
     </header>
 
@@ -59,7 +69,7 @@
         <div class="container hidden">
             <h2>Nossa Quadra <i class="fa-solid fa-map-location-dot text-accent"></i></h2>
             <p>Venha nos visitar, treinar e fazer parte da família Fúria!</p>
-            
+
             <div class="map-container">
                 <div class="map-overlay">
                     <a href="https://maps.app.goo.gl/ZsdNEov2mNemDqCu8" target="_blank" class="map-link"></a>
@@ -67,19 +77,59 @@
                         <i class="fa-brands fa-google"></i> Abrir no Google Maps
                     </div>
                 </div>
-                <iframe src="https://maps.google.com/maps?q=41.1700634,-8.6156129&z=15&output=embed" title="Google Maps" allowfullscreen="" loading="lazy"></iframe>
+                <iframe src="https://maps.google.com/maps?q=41.1700634,-8.6156129&z=15&output=embed" title="Google Maps"
+                    allowfullscreen="" loading="lazy"></iframe>
             </div>
+        </div>
+    </section>
+
+    <section id="join" class="join section">
+        <div class="container hidden">
+            <div class="join-card">
+                <h2>Quero Conhecer a Fúria! <i class="fa-brands fa-whatsapp text-accent"></i></h2>
+                <p>Venha fazer parte do nosso time. Fale com a gente diretamente pelo WhatsApp e saiba mais sobre nossos
+                    treinos e jogos.</p>
+                <a href="https://wa.me/351911977113" target="_blank" class="btn primary-btn whatsapp-btn">
+                    <i class="fa-brands fa-whatsapp"></i> Chamar no WhatsApp
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact section">
+        <div class="container hidden">
+            <h2>Fale Conosco <i class="fa-solid fa-envelope text-accent"></i></h2>
+            <p>Dúvidas, sugestões ou reclamações? Preencha o formulário abaixo.</p>
+            <form class="contact-form" name="contato" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+                <p class="hidden-field">
+                    <label>Não preencha isto: <input name="bot-field" /></label>
+                </p>
+                <div class="form-group">
+                    <input type="text" name="name" placeholder="Seu Nome" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" name="email" placeholder="Seu E-mail" required>
+                </div>
+                <div class="form-group">
+                    <textarea name="message" placeholder="Sua Mensagem" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="btn secondary-btn">Enviar Mensagem</button>
+            </form>
         </div>
     </section>
 
     <footer>
         <p>&copy; 2026 Fúria Voleibol. Todos os direitos reservados.</p>
+        <p class="footer-email"><a href="mailto:adm@furiavoleibol.pt"><i class="fa-solid fa-envelope"></i>
+                adm@furiavoleibol.pt</a></p>
         <div class="socials">
-            <a href="https://www.instagram.com/furiavoleibol_/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+            <a href="https://www.instagram.com/furiavoleibol_/" target="_blank"><i
+                    class="fa-brands fa-instagram"></i></a>
             <a href="https://wa.me/351911977113" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
         </div>
     </footer>
 
     <script src="script.js"></script>
 </body>
+
 </html>

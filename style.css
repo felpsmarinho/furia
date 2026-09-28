@@ -122,6 +122,13 @@ nav a:hover::after {
     width: 100%;
 }
 
+.menu-toggle {
+    display: none;
+    font-size: 1.8rem;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
 /* Buttons */
 .btn {
     display: inline-block;
@@ -169,6 +176,22 @@ nav a:hover::after {
     justify-content: center;
     padding: 100px 20px;
     position: relative;
+}
+
+.section:not(.hero) {
+    background: linear-gradient(to bottom, var(--bg-color), #050507);
+}
+
+.section::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-color), var(--primary-color), var(--accent-color), transparent);
+    box-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--primary-color);
+    z-index: 5;
 }
 
 .container {
@@ -259,10 +282,6 @@ nav a:hover::after {
 }
 
 /* Spirit Section */
-.spirit {
-    background: rgba(255,255,255,0.02);
-}
-
 .spirit h2 {
     font-size: 3rem;
     margin-bottom: 60px;
@@ -331,10 +350,6 @@ nav a:hover::after {
 }
 
 /* Location Section */
-.location {
-    background: linear-gradient(to bottom, var(--bg-color), #050507);
-}
-
 .location h2 {
     font-size: 3rem;
     margin-bottom: 15px;
@@ -509,11 +524,134 @@ footer p {
     100% { clip: rect(15px, 9999px, 68px, 0); }
 }
 
+/* Forms and New Sections */
+.join {
+    text-align: center;
+    padding: 80px 20px;
+    min-height: auto;
+}
+
+.join-card {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--card-bg);
+    padding: 50px 30px;
+    border-radius: 20px;
+    border: 1px solid rgba(192, 11, 253, 0.3);
+    backdrop-filter: blur(10px);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.join-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5), 0 0 20px rgba(192, 11, 253, 0.15);
+}
+
+.join h2, .contact h2 {
+    margin-bottom: 20px;
+}
+
+.join p, .contact p {
+    margin-bottom: 35px;
+    font-size: 1.1rem;
+    color: #bbb;
+}
+
+.whatsapp-btn {
+    background: #25D366;
+    background-image: linear-gradient(45deg, #1ebe57, #25D366);
+    box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+}
+
+.whatsapp-btn:hover {
+    box-shadow: 0 15px 25px rgba(37, 211, 102, 0.5);
+    background-image: linear-gradient(45deg, #25D366, #1ebe57);
+}
+
+.contact {
+    padding: 80px 20px;
+    min-height: auto;
+}
+
+.contact-form {
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: 20px;
+    border: 1px solid rgba(192, 11, 253, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.contact-form input, .contact-form textarea {
+    width: 100%;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.2);
+    color: var(--text-color);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.contact-form input:focus, .contact-form textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.hidden-field {
+    display: none;
+}
+
+.footer-email {
+    margin-top: 5px;
+    font-size: 1.1rem;
+}
+
+.footer-email a {
+    color: #aaa;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-email a:hover {
+    color: var(--accent-color);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .hero h1 { font-size: 3rem; }
     .hero .subtitle { font-size: 1.1rem; }
     .navbar { padding: 15px 20px; }
-    nav { display: none; }
+    
+    .menu-toggle { display: block; }
+    
+    nav { 
+        position: absolute;
+        top: 60px;
+        right: -100%;
+        width: 100%;
+        height: calc(100vh - 60px);
+        background: rgba(1, 12, 44, 0.98);
+        backdrop-filter: blur(15px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 50px;
+        transition: right 0.4s ease;
+    }
+    
+    nav.active { right: 0; }
+    
+    nav a {
+        margin: 20px 0;
+        font-size: 1.5rem;
+    }
+
     #cursor-glow { display: none; }
 }
