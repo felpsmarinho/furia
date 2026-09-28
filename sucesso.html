@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensagem Enviada | Fúria Voleibol</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Outfit:wght@300;500;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .success-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to bottom, var(--bg-color), #050507);
+            padding: 20px;
+        }
+
+        .success-card {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            background: var(--card-bg);
+            padding: 60px 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(192, 11, 253, 0.3);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5), 0 0 20px rgba(192, 11, 253, 0.15);
+        }
+
+        .success-icon {
+            font-size: 5rem;
+            color: #25D366; /* WhatsApp Green to keep consistency with positive actions */
+            margin-bottom: 25px;
+            filter: drop-shadow(0 0 10px rgba(37, 211, 102, 0.4));
+        }
+
+        .success-card h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .success-card p {
+            font-size: 1.2rem;
+            color: #bbb;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .success-btn {
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(192, 11, 253, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .success-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(192, 11, 253, 0.5);
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cursor-glow"></div>
+
+    <div class="success-page">
+        <div class="success-card">
+            <i class="fa-solid fa-circle-check success-icon"></i>
+            <h1>Mensagem Recebida!</h1>
+            <p>A sua mensagem foi enviada com sucesso para a nossa equipa. Entraremos em contacto consigo o mais brevemente possível.</p>
+            <a href="/" class="btn success-btn">
+                <i class="fa-solid fa-arrow-left"></i> Voltar à Página Inicial
+            </a>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -66,14 +66,16 @@ window.addEventListener('scroll', () => {
 // Navbar background blur on scroll
 const navbar = document.querySelector('.navbar');
 window.addEventListener('scroll', () => {
-    if (window.scrollY > 50) {
-        navbar.style.padding = '15px 50px';
-        navbar.style.background = 'rgba(8, 8, 10, 0.95)';
-        navbar.style.boxShadow = '0 5px 20px rgba(0,0,0,0.5)';
-    } else {
-        navbar.style.padding = '20px 50px';
-        navbar.style.background = 'rgba(12, 12, 14, 0.8)';
-        navbar.style.boxShadow = 'none';
+    if (navbar) {
+        if (window.scrollY > 50) {
+            navbar.style.padding = '15px 50px';
+            navbar.style.background = 'rgba(8, 8, 10, 0.95)';
+            navbar.style.boxShadow = '0 5px 20px rgba(0,0,0,0.5)';
+        } else {
+            navbar.style.padding = '20px 50px';
+            navbar.style.background = 'rgba(12, 12, 14, 0.8)';
+            navbar.style.boxShadow = 'none';
+        }
     }
 });
 
