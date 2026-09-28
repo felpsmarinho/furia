@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fúria Voleibol | Jogue com Intensidade</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Outfit:wght@300;500;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="cursor-glow"></div>
+    
+    <header class="navbar">
+        <div class="logo-container">
+            <img src="public/img/furia_logo.png" alt="Fúria Voleibol Logo" class="logo" onerror="this.src='https://via.placeholder.com/150?text=Furia+Logo'">
+            <span class="logo-text">FÚRIA</span>
+        </div>
+        <nav>
+            <a href="#hero">Início</a>
+            <a href="#spirit">O Espírito</a>
+            <a href="#location">Localização</a>
+        </nav>
+    </header>
+
+    <section id="hero" class="hero section">
+        <div class="hero-content hidden">
+            <h1 class="glitch" data-text="FÚRIA VOLEIBOL">FÚRIA VOLEIBOL</h1>
+            <p class="subtitle">Organização, Respeito, Evolução e Bons jogos.</p>
+            <a href="#spirit" class="btn primary-btn">Descubra Nosso Espírito <i class="fa-solid fa-bolt"></i></a>
+        </div>
+
+    </section>
+
+    <section id="spirit" class="spirit section">
+        <div class="container hidden">
+            <h2>Esse é o nosso Espírito! <i class="fa-solid fa-bolt text-accent"></i></h2>
+            <div class="cards">
+                <div class="card" style="--delay: 0.1s">
+                    <i class="fa-solid fa-fire icon"></i>
+                    <h3>Intensidade</h3>
+                    <p>Jogue com intensidade e dê o seu máximo em cada ponto. A paixão pelo vôlei nos move.</p>
+                </div>
+                <div class="card" style="--delay: 0.2s">
+                    <i class="fa-solid fa-users icon"></i>
+                    <h3>Comunidade</h3>
+                    <p>Evolua em comunidade, com respeito e companheirismo sempre. Dentro e fora de quadra.</p>
+                </div>
+                <div class="card" style="--delay: 0.3s">
+                    <i class="fa-solid fa-arrow-trend-up icon"></i>
+                    <h3>Evolução</h3>
+                    <p>Foco na organização e aprendizado contínuo para alcançar grandes resultados e bons jogos.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="location" class="location section">
+        <div class="container hidden">
+            <h2>Nossa Quadra <i class="fa-solid fa-map-location-dot text-accent"></i></h2>
+            <p>Venha nos visitar, treinar e fazer parte da família Fúria!</p>
+            
+            <div class="map-container">
+                <div class="map-overlay">
+                    <a href="https://maps.app.goo.gl/ZsdNEov2mNemDqCu8" target="_blank" class="map-link"></a>
+                    <div class="btn secondary-btn">
+                        <i class="fa-brands fa-google"></i> Abrir no Google Maps
+                    </div>
+                </div>
+                <iframe src="https://maps.google.com/maps?q=41.1700634,-8.6156129&z=15&output=embed" title="Google Maps" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Fúria Voleibol. Todos os direitos reservados.</p>
+        <div class="socials">
+            <a href="https://www.instagram.com/furiavoleibol_/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+            <a href="https://wa.me/351911977113" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
