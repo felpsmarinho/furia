@@ -28,9 +28,11 @@
         <nav id="nav-menu">
             <a href="#hero">Início</a>
             <a href="#spirit">O Espírito</a>
+            <a href="#calendar">Calendário</a>
             <a href="#location">Localização</a>
             <a href="#join">Conheça</a>
             <a href="#contact">Contato</a>
+            <a href="login.html" id="nav-admin-link" class="nav-admin-btn"><i class="fa-solid fa-lock"></i> Área Admin</a>
         </nav>
     </header>
 
@@ -66,6 +68,126 @@
                     <i class="fa-solid fa-arrow-trend-up icon"></i>
                     <h3>Evolução</h3>
                     <p>Foco na organização e aprendizado contínuo para alcançar grandes resultados e bons jogos.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="calendar" class="calendar-section section">
+        <div class="container hidden">
+            <h2>Calendário de Jogos <i class="fa-solid fa-calendar-days text-accent"></i></h2>
+            <p class="calendar-subtitle">Acompanhe nossos jogos oficiais, amistosos, treinos semanais e torneios com localização direta no Google Maps.</p>
+
+            <!-- Barra de Controle Visual do Admin (exibida apenas quando autenticado) -->
+            <div id="admin-calendar-toolbar" class="admin-calendar-toolbar" style="display: none;">
+                <div class="admin-toolbar-left">
+                    <div class="admin-toolbar-info">
+                        <span class="admin-active-pill"><i class="fa-solid fa-user-shield"></i> Modo Editor Visual</span>
+                        <span id="admin-user-email" class="admin-user-email"></span>
+                        <span id="admin-storage-badge" class="admin-storage-badge cloud">
+                            <i class="fa-solid fa-shield-halved"></i> Supabase RLS Ativo
+                        </span>
+                    </div>
+                    <p class="admin-visual-tip">
+                        <i class="fa-solid fa-wand-magic-sparkles text-accent"></i>
+                        <strong>Edição Visual Ativa:</strong> Clique no botão <code>+</code> em qualquer dia para criar jogos (únicos, diários, semanais, quinzenais ou mensais), clique num jogo para editar ou <strong>arraste e solte</strong> um jogo entre os dias para reagendar!
+                    </p>
+                </div>
+                <div class="admin-toolbar-actions">
+                    <button type="button" id="open-new-game-modal-btn" class="btn primary-btn btn-sm">
+                        <i class="fa-solid fa-calendar-plus"></i> Novo Jogo / Série
+                    </button>
+                    <button type="button" id="admin-logout-btn" class="btn secondary-btn btn-sm">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sair
+                    </button>
+                </div>
+            </div>
+
+            <div id="calendar-layout" class="calendar-layout visitor-only-cards">
+                <!-- Coluna Esquerda: Calendário Visual Interativo (Exibido apenas para Admin) -->
+                <div id="calendar-widget-card" class="calendar-widget-card" style="display: none;">
+                    <div class="cal-top-controls">
+                        <div class="cal-view-switcher" role="tablist" aria-label="Modo de visualização do calendário">
+                            <button type="button" class="cal-view-btn active" data-cal-view="month">
+                                <i class="fa-solid fa-calendar-days"></i> Mês
+                            </button>
+                            <button type="button" class="cal-view-btn" data-cal-view="week">
+                                <i class="fa-solid fa-calendar-week"></i> Semana
+                            </button>
+                            <button type="button" class="cal-view-btn" data-cal-view="day">
+                                <i class="fa-solid fa-calendar-day"></i> Dia
+                            </button>
+                        </div>
+
+                        <div class="cal-nav-btns">
+                            <button type="button" id="cal-prev-month" class="cal-nav-btn" aria-label="Período anterior">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button type="button" id="cal-today-btn" class="cal-today-btn">Hoje</button>
+                            <button type="button" id="cal-next-month" class="cal-nav-btn" aria-label="Próximo período">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="cal-header">
+                        <h3 id="cal-month-year">Novembro 2026</h3>
+                        <span id="cal-period-summary" class="cal-period-summary"></span>
+                    </div>
+
+                    <!-- Vista Mensal -->
+                    <div id="cal-month-view-container">
+                        <div class="cal-weekdays">
+                            <span>DOM</span>
+                            <span>SEG</span>
+                            <span>TER</span>
+                            <span>QUA</span>
+                            <span>QUI</span>
+                            <span>SEX</span>
+                            <span>SÁB</span>
+                        </div>
+                        <div id="cal-days-grid" class="cal-days-grid"></div>
+                    </div>
+
+                    <!-- Vista Semanal -->
+                    <div id="cal-week-view-container" class="cal-week-grid" style="display: none;"></div>
+
+                    <!-- Vista Diária -->
+                    <div id="cal-day-view-container" class="cal-day-detail-view" style="display: none;"></div>
+
+                    <div class="cal-legend">
+                        <span class="legend-item"><i class="cal-dot cat-misto"></i> Misto</span>
+                        <span class="legend-item"><i class="cal-dot cat-masculino"></i> Masculino</span>
+                        <span class="legend-item"><i class="cal-dot cat-feminino"></i> Feminino</span>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita: Lista de Jogos, Filtros e Localizações -->
+                <div class="games-panel-card">
+                    <div class="games-panel-header">
+                        <div class="games-panel-title-wrap">
+                            <h3 id="games-list-title"><i class="fa-solid fa-volleyball text-accent"></i> Jogos do Mês</h3>
+                            <span id="games-count-badge" class="games-count-badge">0 Jogos</span>
+                        </div>
+                        <div class="games-filter-tabs">
+                            <button type="button" id="filter-month-btn" class="filter-tab active">Mês</button>
+                            <button type="button" id="filter-week-btn" class="filter-tab">Semana</button>
+                            <button type="button" id="filter-upcoming-btn" class="filter-tab">Próximos</button>
+                            <button type="button" id="clear-day-filter-btn" class="filter-tab clear-day-tab" style="display: none;">
+                                <i class="fa-solid fa-xmark"></i> Limpar Dia
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtro rápido por Categoria -->
+                    <div class="category-pills-bar" id="category-filter-bar">
+                        <button type="button" class="cat-pill active" data-cat="all">Todos</button>
+                        <button type="button" class="cat-pill" data-cat="Misto">Misto</button>
+                        <button type="button" class="cat-pill" data-cat="Masculino">Masculino</button>
+                        <button type="button" class="cat-pill" data-cat="Feminino">Feminino</button>
+                    </div>
+
+                    <div id="games-list" class="games-list"></div>
                 </div>
             </div>
         </div>
@@ -136,6 +258,199 @@
         </div>
     </footer>
 
+    <!-- Modal Admin: Criar / Editar Jogo ou Série Recorrente -->
+    <div id="game-modal-overlay" class="modal-overlay">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <h3 id="game-modal-title"><i class="fa-solid fa-calendar-plus text-accent"></i> Agendar Jogo / Evento</h3>
+                <button type="button" id="close-game-modal-btn" class="modal-close-btn" aria-label="Fechar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="game-form" class="modal-form">
+                <input type="hidden" id="game-id-input">
+                <input type="hidden" id="game-series-id-input">
+                <div id="game-form-feedback" class="modal-feedback" style="display: none;"></div>
+
+                <!-- Aviso de edição de série recorrente (exibido apenas ao editar jogo de uma série) -->
+                <div id="series-edit-option-box" class="series-option-box" style="display: none;">
+                    <label class="checkbox-inline-label">
+                        <input type="checkbox" id="apply-to-series-checkbox">
+                        <span><i class="fa-solid fa-repeat text-accent"></i> Este evento faz parte de uma série recorrente. Aplicar alterações de título, horário e local em <strong>todos os eventos desta série</strong>.</span>
+                    </label>
+                </div>
+
+                <!-- Linha 1: Título e Categoria (Misto, Masculino, Feminino) -->
+                <div class="modal-form-row">
+                    <div class="form-group modal-col-8">
+                        <label for="game-title-input">Título do Jogo / Evento *</label>
+                        <input type="text" id="game-title-input" placeholder="Ex: Fúria Voleibol vs. Atlântico VC ou Treino Tático" required maxlength="160">
+                    </div>
+                    <div class="form-group modal-col-4">
+                        <label for="game-gender-category-input">Categoria *</label>
+                        <select id="game-gender-category-input" required>
+                            <option value="Misto">Misto</option>
+                            <option value="Masculino">Masculino</option>
+                            <option value="Feminino">Feminino</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Linha 2: Nível (3 níveis), Status (Opcional) e Adversário (Opcional) -->
+                <div class="modal-form-row">
+                    <div class="form-group modal-col-4">
+                        <label for="game-level-3-input">Nível *</label>
+                        <select id="game-level-3-input" required>
+                            <option value="Iniciante">Iniciante</option>
+                            <option value="Intermediário" selected>Intermediário</option>
+                            <option value="Avançado">Avançado</option>
+                        </select>
+                    </div>
+                    <div class="form-group modal-col-4">
+                        <label for="game-status-input">Status (Opcional)</label>
+                        <select id="game-status-input">
+                            <option value="">Sem status</option>
+                            <option value="Confirmado">Confirmado</option>
+                            <option value="Inscrições Abertas">Inscrições Abertas</option>
+                            <option value="Adiado">Adiado</option>
+                            <option value="Cancelado">Cancelado</option>
+                            <option value="Concluído">Concluído</option>
+                        </select>
+                    </div>
+                    <div class="form-group modal-col-4">
+                        <label for="game-opponent-input">Adversário (Opcional)</label>
+                        <input type="text" id="game-opponent-input" placeholder="Ex: Atlântico VC">
+                    </div>
+                </div>
+
+                <!-- Linha 3: Data, Início, Término e Dia Inteiro -->
+                <div class="modal-form-row">
+                    <div class="form-group modal-col-4">
+                        <label for="game-date-input" id="game-date-label">Data do Jogo *</label>
+                        <input type="date" id="game-date-input" required>
+                    </div>
+                    <div class="form-group modal-col-4" id="start-time-group">
+                        <label for="game-start-input">Horário de Início *</label>
+                        <input type="time" id="game-start-input" required>
+                    </div>
+                    <div class="form-group modal-col-4" id="end-time-group">
+                        <div class="label-with-action">
+                            <label for="game-end-input">Término</label>
+                            <label class="allday-toggle-label">
+                                <input type="checkbox" id="game-allday-input"> Dia Inteiro
+                            </label>
+                        </div>
+                        <input type="time" id="game-end-input">
+                    </div>
+                </div>
+
+                <!-- Bloco de Recorrência Visual (Opções Diárias, Semanais, Quinzenais, Mensais) -->
+                <div id="recurrence-builder-box" class="recurrence-builder-box">
+                    <div class="recurrence-header">
+                        <label for="game-recurrence-input"><i class="fa-solid fa-repeat text-accent"></i> Frequência / Repetição no Calendário</label>
+                        <span id="recurrence-summary-badge" class="recurrence-summary-badge">1 data será agendada</span>
+                    </div>
+
+                    <div class="modal-form-row">
+                        <div class="form-group modal-col-6">
+                            <select id="game-recurrence-input">
+                                <option value="unico">Jogo Único (Apenas nesta data)</option>
+                                <option value="diario">Diário (Todos os dias seguidos)</option>
+                                <option value="semanal">Semanal (Escolher dias da semana)</option>
+                                <option value="quinzenal">Quinzenal (A cada 2 semanas)</option>
+                                <option value="mensal">Mensal (Todo mês neste dia)</option>
+                            </select>
+                        </div>
+                        <div class="form-group modal-col-6" id="recurrence-count-group" style="display: none;">
+                            <div class="recurrence-count-inline">
+                                <span id="recurrence-count-label">Repetir por:</span>
+                                <input type="number" id="game-recurrence-count" min="2" max="52" value="4">
+                                <span id="recurrence-unit-label">semanas</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seletor de Dias da Semana (para Recorrência Semanal) -->
+                    <div id="weekdays-selector-group" class="weekdays-selector-group" style="display: none;">
+                        <span class="weekdays-label">Dias da semana do jogo/treino:</span>
+                        <div class="weekday-pills">
+                            <button type="button" class="weekday-pill" data-day="0">DOM</button>
+                            <button type="button" class="weekday-pill" data-day="1">SEG</button>
+                            <button type="button" class="weekday-pill" data-day="2">TER</button>
+                            <button type="button" class="weekday-pill" data-day="3">QUA</button>
+                            <button type="button" class="weekday-pill" data-day="4">QUI</button>
+                            <button type="button" class="weekday-pill" data-day="5">SEX</button>
+                            <button type="button" class="weekday-pill" data-day="6">SÁB</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Localização, Link do Google Maps (Opcional) e Link para Inscrição (Opcional) -->
+                <div class="form-group">
+                    <label for="game-location-input">Nome do Local / Quadra *</label>
+                    <input type="text" id="game-location-input" placeholder="Ex: Pavilhão Desportivo Municipal da Maia" required maxlength="200">
+                    <div id="recent-locations-chips" class="recent-locations-chips"></div>
+                </div>
+
+                <div class="modal-form-row">
+                    <div class="form-group modal-col-6">
+                        <label for="game-maps-input">Link do Google Maps (Opcional)</label>
+                        <input type="url" id="game-maps-input" placeholder="https://maps.app.goo.gl/... ou https://www.google.com/maps/...">
+                    </div>
+                    <div class="form-group modal-col-6">
+                        <label for="game-registration-input">Link para Inscrição (Opcional)</label>
+                        <input type="url" id="game-registration-input" placeholder="Ex: https://www.volleydash.online/series/c8be0e">
+                    </div>
+                </div>
+
+                <!-- Observações -->
+                <div class="form-group">
+                    <label for="game-notes-input">Observações / Informações Extras (Opcional)</label>
+                    <input type="text" id="game-notes-input" placeholder="Ex: Chegar 30 min antes, uniforme roxo/preto, entrada franca..." maxlength="1000">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="cancel-game-modal-btn" class="btn secondary-btn btn-sm">Cancelar</button>
+                    <button type="submit" id="save-game-btn" class="btn primary-btn btn-sm">
+                        <i class="fa-solid fa-check"></i> Salvar no Calendário
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Admin: Confirmar Exclusão -->
+    <div id="delete-modal-overlay" class="modal-overlay">
+        <div class="modal-card modal-sm">
+            <div class="delete-modal-content">
+                <div class="delete-icon-circle">
+                    <i class="fa-solid fa-trash-can"></i>
+                </div>
+                <h3>Excluir Jogo?</h3>
+                <p>Tem certeza que deseja remover este evento do calendário oficial da Fúria?</p>
+
+                <div id="delete-series-option-box" class="series-option-box delete-series-box" style="display: none;">
+                    <label class="checkbox-inline-label">
+                        <input type="checkbox" id="delete-entire-series-checkbox">
+                        <span>Excluir <strong>todos os jogos desta série recorrente</strong> de uma só vez.</span>
+                    </label>
+                </div>
+
+                <div class="modal-footer centered">
+                    <button type="button" id="cancel-delete-btn" class="btn secondary-btn btn-sm">Cancelar</button>
+                    <button type="button" id="confirm-delete-btn" class="btn danger-btn btn-sm">
+                        <i class="fa-solid fa-trash-can"></i> Confirmar Exclusão
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SDK Oficial do Supabase via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="calendar.js"></script>
     <script src="script.js"></script>
 </body>
 

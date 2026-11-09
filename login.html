@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://kegzklscgzowhdfclsim.supabase.co;">
+    <title>Acesso Administrativo | Fúria Voleibol</title>
+    <link rel="icon" type="image/png" href="public/img/furia_logo.png">
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Outfit:wght@300;400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="login-page-body">
+    <div id="cursor-glow"></div>
+
+    <!-- Elementos de fundo animados -->
+    <div class="login-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="court-grid-overlay"></div>
+    </div>
+
+    <!-- Top bar simples para retorno -->
+    <header class="login-topbar">
+        <a href="index.html" id="back-home-link" class="back-home-link">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Voltar para a Landing Page</span>
+        </a>
+    </header>
+
+    <main class="login-wrapper">
+        <div class="login-card">
+            <div class="login-card-glow"></div>
+
+            <div class="login-header">
+                <div class="login-logo-ring">
+                    <img src="public/img/furia_logo.png" alt="Fúria Voleibol Logo" class="login-logo"
+                        onerror="this.src='https://via.placeholder.com/150?text=Furia+Logo'">
+                </div>
+                <h1 class="glitch" data-text="PAINEL FÚRIA">PAINEL FÚRIA</h1>
+                <p>Autenticação exclusiva para administração visual do calendário de jogos, treinos e torneios.</p>
+            </div>
+
+            <!-- Estado quando já está autenticado -->
+            <div id="already-logged-box" class="already-logged-box" style="display: none;">
+                <div class="logged-avatar">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h3>Sessão Administrativa Ativa</h3>
+                <p id="logged-user-display"></p>
+                <div class="logged-actions">
+                    <a href="index.html#calendar" id="open-calendar-editor-link" class="btn primary-btn full-width-btn">
+                        <i class="fa-solid fa-calendar-days"></i> Abrir Editor Visual do Calendário
+                    </a>
+                    <button type="button" id="logout-from-login-btn" class="btn secondary-btn full-width-btn">
+                        <i class="fa-solid fa-right-from-bracket"></i> Encerrar Sessão Segura
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formulário de Login -->
+            <form id="admin-login-form" class="login-form" autocomplete="on" novalidate>
+                <div id="login-alert" class="login-alert" style="display: none;"></div>
+
+                <!-- Campo Honeypot invisível contra bots de força bruta -->
+                <div class="hidden-field" aria-hidden="true">
+                    <label for="sec-website-hp">Não preencha este campo</label>
+                    <input type="text" id="sec-website-hp" name="website_hp" tabindex="-1" autocomplete="off">
+                </div>
+
+                <div class="input-field-group">
+                    <label for="admin-email">E-mail da Administração</label>
+                    <div class="input-with-icon">
+                        <i class="fa-regular fa-envelope field-icon"></i>
+                        <input type="email" id="admin-email" name="email" placeholder="Digite seu e-mail administrativo"
+                            required autocomplete="username" spellcheck="false">
+                    </div>
+                </div>
+
+                <div class="input-field-group">
+                    <label for="admin-password">Palavra-passe</label>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-lock field-icon"></i>
+                        <input type="password" id="admin-password" name="password" placeholder="••••••••••••" required
+                            autocomplete="current-password">
+                        <button type="button" class="toggle-password-btn" id="toggle-password"
+                            aria-label="Mostrar palavra-passe">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn primary-btn login-submit-btn" id="login-submit-btn">
+                    <span>Autenticar no Painel</span>
+                    <i class="fa-solid fa-bolt"></i>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- SDK Oficial do Supabase via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loginForm = document.getElementById('admin-login-form');
+            const alreadyLoggedBox = document.getElementById('already-logged-box');
+            const loggedUserDisplay = document.getElementById('logged-user-display');
+            const openCalendarEditorLink = document.getElementById('open-calendar-editor-link');
+            const backHomeLink = document.getElementById('back-home-link');
+            const logoutBtn = document.getElementById('logout-from-login-btn');
+            const emailInput = document.getElementById('admin-email');
+            const passwordInput = document.getElementById('admin-password');
+            const honeypotInput = document.getElementById('sec-website-hp');
+            const togglePasswordBtn = document.getElementById('toggle-password');
+            const submitBtn = document.getElementById('login-submit-btn');
+            const alertBox = document.getElementById('login-alert');
+
+            let lockoutTimer = null;
+
+            function startLockoutCountdown() {
+                if (lockoutTimer) clearInterval(lockoutTimer);
+                const updateLockUI = () => {
+                    const remaining = window.FuriaDataService.getLockoutRemainingSeconds();
+                    if (remaining > 0) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Bloqueado (${remaining}s)`;
+                    } else {
+                        clearInterval(lockoutTimer);
+                        lockoutTimer = null;
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<span>Autenticar no Painel</span> <i class="fa-solid fa-bolt"></i>';
+                    }
+                };
+                updateLockUI();
+                lockoutTimer = setInterval(updateLockUI, 1000);
+            }
+
+            if (window.FuriaDataService.getLockoutRemainingSeconds() > 0) {
+                startLockoutCountdown();
+            }
+
+            // Verificar se já existe sessão ativa válida no servidor
+            const currentAuth = await window.FuriaDataService.getCurrentSession();
+            if (currentAuth && currentAuth.user) {
+                loginForm.style.display = 'none';
+                alreadyLoggedBox.style.display = 'block';
+                loggedUserDisplay.textContent = currentAuth.user.email;
+                const redirectUrl = window.FuriaDataService.getCalendarRedirectUrl(currentAuth.session);
+                if (openCalendarEditorLink) openCalendarEditorLink.href = redirectUrl;
+                if (backHomeLink) backHomeLink.href = redirectUrl;
+            }
+
+            // Alternar visualização de senha
+            if (togglePasswordBtn) {
+                togglePasswordBtn.addEventListener('click', () => {
+                    const isPass = passwordInput.type === 'password';
+                    passwordInput.type = isPass ? 'text' : 'password';
+                    togglePasswordBtn.innerHTML = isPass
+                        ? '<i class="fa-regular fa-eye-slash"></i>'
+                        : '<i class="fa-regular fa-eye"></i>';
+                });
+            }
+
+            // Logout seguro
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    await window.FuriaDataService.signOut();
+                    alreadyLoggedBox.style.display = 'none';
+                    loginForm.style.display = 'block';
+                    passwordInput.value = '';
+                    if (backHomeLink) backHomeLink.href = 'index.html';
+                });
+            }
+
+            // Submissão do Login com proteção contra força bruta
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                alertBox.style.display = 'none';
+
+                if (window.FuriaDataService.getLockoutRemainingSeconds() > 0) {
+                    startLockoutCountdown();
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span>Verificando credenciais...</span> <i class="fa-solid fa-spinner fa-spin"></i>';
+
+                try {
+                    const hp = honeypotInput ? honeypotInput.value : '';
+                    const authResult = await window.FuriaDataService.signIn(emailInput.value, passwordInput.value, hp);
+
+                    passwordInput.value = '';
+                    alertBox.className = 'login-alert success';
+                    alertBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span>Autenticação confirmada! Abrindo o calendário administrativo...</span>';
+                    alertBox.style.display = 'flex';
+
+                    const redirectUrl = window.FuriaDataService.getCalendarRedirectUrl(authResult.session);
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 450);
+                } catch (err) {
+                    alertBox.className = 'login-alert error';
+                    alertBox.textContent = '';
+                    const icon = document.createElement('i');
+                    icon.className = 'fa-solid fa-triangle-exclamation';
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = err.message || 'Falha na autenticação.';
+                    alertBox.appendChild(icon);
+                    alertBox.appendChild(textSpan);
+                    alertBox.style.display = 'flex';
+
+                    if (window.FuriaDataService.getLockoutRemainingSeconds() > 0) {
+                        startLockoutCountdown();
+                    } else {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<span>Autenticar no Painel</span> <i class="fa-solid fa-bolt"></i>';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -20,6 +20,8 @@ html {
     background-color: var(--bg-color);
     color: var(--text-color);
     overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cpath fill='%23C00BFD' stroke='%23ffffff' stroke-width='1.5' stroke-linejoin='round' d='M11 0L1 13h7v11L23 11h-8Z'/%3E%3C/svg%3E") 11 0, auto;
 }
 
@@ -30,6 +32,9 @@ a, button, .menu-toggle, .btn, input, textarea, select {
 
 body {
     position: relative;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* Custom Cursor Glow */
@@ -182,6 +187,9 @@ nav a:hover::after {
     justify-content: center;
     padding: 100px 20px;
     position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .section:not(.hero) {
@@ -203,6 +211,7 @@ nav a:hover::after {
 .container {
     max-width: 1200px;
     width: 100%;
+    min-width: 0;
     text-align: center;
 }
 
@@ -318,7 +327,7 @@ nav a:hover::after {
 
 .cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
     gap: 40px;
 }
 
@@ -654,33 +663,2459 @@ footer p {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .hero h1 { font-size: 3rem; }
-    .hero .subtitle { font-size: 1.1rem; }
-    .navbar { padding: 15px 20px; }
+    .section {
+        padding: 80px 16px;
+    }
+
+    .hero-content {
+        width: 100%;
+        max-width: 100%;
+        padding: 0 8px;
+    }
+
+    .hero h1 {
+        font-size: clamp(2rem, 8.5vw, 2.8rem);
+        letter-spacing: 2px;
+        word-break: break-word;
+    }
+
+    .hero .subtitle {
+        font-size: 1.05rem;
+        padding: 0 6px;
+    }
+
+    .btn {
+        padding: 14px 24px;
+        font-size: 0.9rem;
+        max-width: 100%;
+    }
+
+    .navbar {
+        padding: 14px 18px;
+        width: 100%;
+        max-width: 100vw;
+        left: 0;
+        right: 0;
+    }
+
+    .logo {
+        width: 40px;
+    }
+
+    .logo-text {
+        font-size: 1.45rem;
+    }
     
     .menu-toggle { display: block; }
     
     nav { 
-        position: absolute;
-        top: 60px;
-        right: -100%;
+        position: fixed;
+        top: 64px;
+        left: 0;
+        right: 0;
         width: 100%;
-        height: calc(100vh - 60px);
+        height: calc(100vh - 64px);
         background: rgba(1, 12, 44, 0.98);
         backdrop-filter: blur(15px);
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding-top: 50px;
-        transition: right 0.4s ease;
+        padding-top: 40px;
+        transform: translateX(100%);
+        visibility: hidden;
+        pointer-events: none;
+        transition: transform 0.35s ease, visibility 0.35s ease;
+        z-index: 999;
     }
     
-    nav.active { right: 0; }
+    nav.active {
+        transform: translateX(0);
+        visibility: visible;
+        pointer-events: auto;
+    }
     
     nav a {
-        margin: 20px 0;
-        font-size: 1.5rem;
+        margin: 16px 0;
+        font-size: 1.35rem;
+    }
+
+    .spirit h2,
+    .location h2,
+    .join h2,
+    .contact h2 {
+        font-size: clamp(1.75rem, 6.5vw, 2.3rem);
+    }
+
+    .card,
+    .join-card,
+    .contact-form {
+        padding: 32px 20px;
+    }
+
+    .map-container {
+        height: 320px;
     }
 
     #cursor-glow { display: none; }
 }
+
+/* ==========================================================================
+   CALENDÁRIO DE JOGOS & PAINEL ADMIN (FÚRIA VOLEIBOL)
+   ========================================================================== */
+
+/* Botão Área Admin na Navbar */
+.nav-admin-btn {
+    padding: 8px 18px;
+    border-radius: 25px;
+    border: 1px solid rgba(192, 11, 253, 0.45);
+    background: rgba(148, 7, 242, 0.15);
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.nav-admin-btn::after {
+    display: none !important;
+}
+
+.nav-admin-btn:hover {
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+    color: #fff !important;
+    box-shadow: 0 0 18px var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+.nav-admin-btn.admin-logged {
+    border-color: #25D366;
+    background: rgba(37, 211, 102, 0.15);
+    color: #5ef38c !important;
+}
+
+/* Seção do Calendário */
+.calendar-section h2 {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.calendar-subtitle {
+    font-size: 1.15rem;
+    color: #bbb;
+    max-width: 720px;
+    margin: 0 auto 45px auto;
+    line-height: 1.6;
+}
+
+/* Barra de Controle do Admin */
+.admin-calendar-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    background: linear-gradient(90deg, rgba(148, 7, 242, 0.22), rgba(1, 12, 44, 0.85));
+    border: 1px solid rgba(192, 11, 253, 0.45);
+    border-radius: 16px;
+    padding: 16px 24px;
+    margin-bottom: 30px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 20px rgba(192, 11, 253, 0.15);
+}
+
+.admin-toolbar-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.admin-active-pill {
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.admin-user-email {
+    color: #e2e8f0;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.admin-storage-badge {
+    font-size: 0.78rem;
+    padding: 4px 12px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.admin-storage-badge.cloud {
+    background: rgba(37, 211, 102, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.35);
+}
+
+.admin-storage-badge.local {
+    background: rgba(0, 212, 255, 0.12);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.admin-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-sm {
+    padding: 10px 20px;
+    font-size: 0.82rem;
+    border-radius: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Grid Principal do Calendário (2 Colunas) */
+.calendar-layout {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 32px;
+    align-items: start;
+    text-align: left;
+}
+
+.calendar-widget-card,
+.games-panel-card {
+    background: rgba(16, 10, 48, 0.65);
+    border: 1px solid rgba(192, 11, 253, 0.25);
+    border-radius: 22px;
+    padding: 28px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+}
+
+/* Cabeçalho do Widget Mensal */
+.cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+}
+
+.cal-header h3 {
+    font-size: 1.25rem;
+    letter-spacing: 1px;
+    color: #fff;
+}
+
+.cal-nav-btns {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cal-nav-btn,
+.cal-today-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-radius: 10px;
+    height: 36px;
+    padding: 0 12px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cal-nav-btn {
+    width: 36px;
+    padding: 0;
+}
+
+.cal-nav-btn:hover,
+.cal-today-btn:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+/* Dias da Semana */
+.cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    text-align: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    width: 100%;
+}
+
+.cal-weekdays span {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Grelha de Dias */
+.cal-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+}
+
+.cal-day {
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.03);
+    color: #e2e8f0;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    position: relative;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    transition: background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.cal-day.empty {
+    background: transparent;
+    pointer-events: none;
+}
+
+.cal-day:not(.empty):hover {
+    background: rgba(192, 11, 253, 0.18);
+    border-color: rgba(192, 11, 253, 0.5);
+}
+
+.cal-day.today {
+    border-color: rgba(0, 212, 255, 0.65);
+    background: rgba(0, 212, 255, 0.1);
+    color: #38bdf8;
+    font-weight: 800;
+}
+
+.cal-day.has-games {
+    background: rgba(148, 7, 242, 0.22);
+    border-color: rgba(192, 11, 253, 0.4);
+    font-weight: 700;
+    color: #fff;
+}
+
+.cal-day.selected {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color)) !important;
+    border-color: #fff !important;
+    color: #fff !important;
+    box-shadow: 0 0 14px var(--accent-glow);
+    transform: none !important;
+}
+
+.cal-day-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+.cal-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.cal-dot.cat-oficial {
+    background: #ff3b5c;
+    box-shadow: 0 0 6px #ff3b5c;
+}
+
+.cal-dot.cat-amistoso {
+    background: #C00BFD;
+    box-shadow: 0 0 6px #C00BFD;
+}
+
+.cal-dot.cat-torneio {
+    background: #f59e0b;
+    box-shadow: 0 0 6px #f59e0b;
+}
+
+.cal-dot.cat-treino {
+    background: #00d4ff;
+    box-shadow: 0 0 6px #00d4ff;
+}
+
+/* Legenda de Categorias */
+.cal-legend {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+}
+
+.legend-item {
+    font-size: 0.78rem;
+    color: #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Painel Direito: Lista de Jogos */
+.games-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.games-panel-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.games-panel-title-wrap h3 {
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.games-count-badge {
+    background: rgba(192, 11, 253, 0.18);
+    border: 1px solid rgba(192, 11, 253, 0.4);
+    color: #f0abfc;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.games-filter-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-tab:hover,
+.filter-tab.active {
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(192, 11, 253, 0.35);
+}
+
+.filter-tab.clear-day-tab {
+    background: rgba(255, 90, 95, 0.15);
+    border-color: rgba(255, 90, 95, 0.4);
+    color: #fda4af;
+}
+
+/* Lista de Cartões de Jogo */
+.games-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    max-height: 540px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.games-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.games-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+}
+
+.games-list::-webkit-scrollbar-thumb {
+    background: rgba(192, 11, 253, 0.4);
+    border-radius: 10px;
+}
+
+.game-card {
+    display: flex;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 4px solid var(--accent-color);
+    border-radius: 16px;
+    padding: 20px;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.game-card:hover {
+    background: rgba(148, 7, 242, 0.12);
+    border-color: rgba(192, 11, 253, 0.4);
+    transform: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+
+.game-date-badge {
+    min-width: 74px;
+    background: linear-gradient(160deg, rgba(192, 11, 253, 0.25), rgba(1, 12, 44, 0.9));
+    border: 1px solid rgba(192, 11, 253, 0.4);
+    border-radius: 14px;
+    padding: 10px 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.game-weekday {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #d8b4fe;
+    letter-spacing: 1px;
+}
+
+.game-day {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.1;
+    margin: 2px 0;
+}
+
+.game-month {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    letter-spacing: 1px;
+}
+
+.game-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.game-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.game-category-tag {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.game-category-tag.cat-oficial {
+    background: rgba(255, 59, 92, 0.18);
+    color: #ff6b84;
+    border: 1px solid rgba(255, 59, 92, 0.4);
+}
+
+.game-category-tag.cat-amistoso {
+    background: rgba(192, 11, 253, 0.18);
+    color: #e879f9;
+    border: 1px solid rgba(192, 11, 253, 0.4);
+}
+
+.game-category-tag.cat-torneio {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.game-category-tag.cat-treino {
+    background: rgba(0, 212, 255, 0.16);
+    color: #38bdf8;
+    border: 1px solid rgba(0, 212, 255, 0.4);
+}
+
+.game-time {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.game-title {
+    font-size: 1.2rem;
+    color: #fff;
+    margin-bottom: 12px;
+    text-transform: none;
+    line-height: 1.35;
+}
+
+.game-location-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.game-location-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.92rem;
+    color: #e2e8f0;
+}
+
+.game-maps-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    background: rgba(192, 11, 253, 0.22);
+    border: 1px solid rgba(192, 11, 253, 0.5);
+    padding: 6px 14px;
+    border-radius: 20px;
+    transition: all 0.25s ease;
+}
+
+.game-maps-btn:hover {
+    background: var(--accent-color);
+    box-shadow: 0 0 14px var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+.game-notes {
+    margin-top: 10px;
+    font-size: 0.86rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.45;
+}
+
+.game-notes i {
+    color: var(--accent-color);
+    margin-top: 3px;
+}
+
+/* Botões Admin dentro do Card */
+.game-admin-actions {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.admin-action-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #e2e8f0;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.admin-action-btn.edit-game-btn:hover {
+    background: rgba(192, 11, 253, 0.25);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+.admin-action-btn.delete-game-btn:hover {
+    background: rgba(255, 59, 92, 0.25);
+    border-color: #ff3b5c;
+    color: #ff6b84;
+}
+
+/* Empty State da Lista */
+.games-empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: #94a3b8;
+}
+
+.games-empty-state .empty-icon {
+    font-size: 3rem;
+    color: rgba(192, 11, 253, 0.5);
+    margin-bottom: 16px;
+}
+
+.games-empty-state h4 {
+    font-family: 'Montserrat', sans-serif;
+    color: #fff;
+    font-size: 1.15rem;
+    margin-bottom: 8px;
+}
+
+.games-empty-state p {
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+}
+
+/* ==========================================================================
+   MODAIS DE ADMINISTRAÇÃO (CRIAR / EDITAR / EXCLUIR JOGO)
+   ========================================================================== */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(1, 6, 22, 0.82);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-card {
+    width: 100%;
+    max-width: 640px;
+    background: linear-gradient(160deg, #0b0726, #02081c);
+    border: 1px solid rgba(192, 11, 253, 0.45);
+    border-radius: 22px;
+    padding: 32px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(192, 11, 253, 0.2);
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.3s ease;
+    max-height: 92vh;
+    overflow-y: auto;
+}
+
+.modal-overlay.active .modal-card {
+    transform: translateY(0) scale(1);
+}
+
+.modal-card.modal-sm {
+    max-width: 440px;
+    text-align: center;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modal-header h3 {
+    font-size: 1.35rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-close-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background: #ff3b5c;
+    border-color: #ff3b5c;
+    color: #fff;
+}
+
+.modal-form .form-group {
+    margin-bottom: 18px;
+    text-align: left;
+}
+
+.modal-form label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #cbd5e1;
+    margin-bottom: 7px;
+}
+
+.label-with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 7px;
+}
+
+.label-with-action label {
+    margin-bottom: 0;
+}
+
+.quick-fill-btn {
+    background: rgba(192, 11, 253, 0.15);
+    border: 1px solid rgba(192, 11, 253, 0.4);
+    color: #f0abfc;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 14px;
+    transition: all 0.2s ease;
+}
+
+.quick-fill-btn:hover {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.modal-form input,
+.modal-form select,
+.modal-form textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.96rem;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    color-scheme: dark;
+}
+
+.modal-form select option {
+    background: #080d29;
+    color: #fff;
+}
+
+.modal-form input:focus,
+.modal-form select:focus,
+.modal-form textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 12px rgba(192, 11, 253, 0.25);
+}
+
+.modal-form-row {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 14px;
+}
+
+.modal-col-8 { grid-column: span 8; }
+.modal-col-4 { grid-column: span 4; }
+
+.modal-footer {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.modal-footer.centered {
+    justify-content: center;
+}
+
+.danger-btn {
+    background: linear-gradient(45deg, #e11d48, #ff3b5c);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.35);
+}
+
+.danger-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(225, 29, 72, 0.55);
+}
+
+.delete-icon-circle {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: rgba(255, 59, 92, 0.15);
+    border: 1px solid rgba(255, 59, 92, 0.4);
+    color: #ff3b5c;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px auto;
+}
+
+.delete-modal-content h3 {
+    margin-bottom: 10px;
+}
+
+.delete-modal-content p {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.modal-feedback {
+    background: rgba(255, 59, 92, 0.16);
+    border: 1px solid rgba(255, 59, 92, 0.45);
+    color: #fda4af;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   PÁGINA DE LOGIN ADMINISTRATIVO (login.html)
+   ========================================================================== */
+
+.login-page-body {
+    min-height: 100vh;
+    background: radial-gradient(circle at 50% 0%, #16063b 0%, var(--bg-color) 55%, #03040c 100%);
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+.login-bg-shapes {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.court-grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(192, 11, 253, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(192, 11, 253, 0.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.7) 20%, transparent 80%);
+}
+
+.login-topbar {
+    position: relative;
+    z-index: 10;
+    padding: 24px 45px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.back-home-link {
+    color: #cbd5e1;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    transition: all 0.25s ease;
+}
+
+.back-home-link:hover {
+    color: #fff;
+    border-color: var(--accent-color);
+    background: rgba(192, 11, 253, 0.18);
+    transform: translateX(-4px);
+}
+
+.connection-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+}
+
+.connection-pill .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #94a3b8;
+}
+
+.connection-pill.cloud {
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #4ade80;
+}
+
+.connection-pill.cloud .status-dot {
+    background: #4ade80;
+    box-shadow: 0 0 8px #4ade80;
+}
+
+.connection-pill.demo {
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #38bdf8;
+}
+
+.connection-pill.demo .status-dot {
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+}
+
+.login-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 20px 50px 20px;
+    position: relative;
+    z-index: 10;
+}
+
+.login-card {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    background: rgba(12, 8, 38, 0.72);
+    border: 1px solid rgba(192, 11, 253, 0.38);
+    border-radius: 26px;
+    padding: 44px 38px;
+    backdrop-filter: blur(18px);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7), 0 0 40px rgba(192, 11, 253, 0.18);
+    overflow: hidden;
+}
+
+.login-card-glow {
+    position: absolute;
+    top: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(192, 11, 253, 0.4) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 32px;
+    position: relative;
+}
+
+.login-logo-ring {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 18px auto;
+    border-radius: 50%;
+    background: rgba(192, 11, 253, 0.12);
+    border: 1px solid rgba(192, 11, 253, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 25px rgba(192, 11, 253, 0.35);
+}
+
+.login-logo {
+    width: 58px;
+    height: auto;
+    filter: drop-shadow(0 0 8px var(--accent-glow));
+}
+
+.login-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #f0abfc;
+    background: rgba(192, 11, 253, 0.18);
+    border: 1px solid rgba(192, 11, 253, 0.35);
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+}
+
+.login-header h1 {
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+.login-header p {
+    font-size: 0.95rem;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+
+.login-form .input-field-group {
+    margin-bottom: 20px;
+}
+
+.login-form label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon .field-icon {
+    position: absolute;
+    left: 16px;
+    color: #94a3b8;
+    font-size: 1rem;
+    pointer-events: none;
+    transition: color 0.25s ease;
+}
+
+.input-with-icon input {
+    width: 100%;
+    padding: 14px 44px 14px 44px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.32);
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    transition: all 0.25s ease;
+}
+
+.input-with-icon input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 18px rgba(192, 11, 253, 0.28);
+    background: rgba(12, 8, 38, 0.85);
+}
+
+.input-with-icon:focus-within .field-icon {
+    color: var(--accent-color);
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1rem;
+    padding: 6px;
+    transition: color 0.2s ease;
+}
+
+.toggle-password-btn:hover {
+    color: #fff;
+}
+
+.login-submit-btn {
+    width: 100%;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+    box-shadow: 0 12px 25px rgba(192, 11, 253, 0.35);
+}
+
+.login-submit-btn:hover {
+    box-shadow: 0 16px 32px rgba(192, 11, 253, 0.55);
+}
+
+.login-alert {
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.4;
+}
+
+.login-alert.error {
+    background: rgba(255, 59, 92, 0.16);
+    border: 1px solid rgba(255, 59, 92, 0.45);
+    color: #fda4af;
+}
+
+.login-alert.success {
+    background: rgba(37, 211, 102, 0.16);
+    border: 1px solid rgba(37, 211, 102, 0.45);
+    color: #86efac;
+}
+
+.demo-credentials-box {
+    margin-top: 24px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px dashed rgba(56, 189, 248, 0.4);
+    font-size: 0.82rem;
+    color: #cbd5e1;
+    line-height: 1.55;
+}
+
+.demo-box-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.fill-demo-btn {
+    background: rgba(192, 11, 253, 0.25);
+    border: 1px solid rgba(192, 11, 253, 0.55);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.fill-demo-btn:hover {
+    background: var(--accent-color);
+}
+
+.demo-credentials-box code {
+    color: #f0abfc;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+.already-logged-box {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.logged-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(37, 211, 102, 0.15);
+    border: 1px solid rgba(37, 211, 102, 0.45);
+    color: #4ade80;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px auto;
+}
+
+.already-logged-box h3 {
+    margin-bottom: 6px;
+}
+
+.already-logged-box p {
+    color: #94a3b8;
+    margin-bottom: 24px;
+}
+
+.logged-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.full-width-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Responsividade do Calendário e Login */
+@media (max-width: 992px) {
+    .calendar-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .calendar-section h2 {
+        font-size: 2.2rem;
+    }
+
+    .game-card {
+        flex-direction: column;
+    }
+
+    .game-date-badge {
+        flex-direction: row;
+        width: 100%;
+        justify-content: center;
+        gap: 10px;
+        padding: 8px 14px;
+    }
+
+    .game-day {
+        font-size: 1.3rem;
+    }
+
+    .modal-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-col-8,
+    .modal-col-7,
+    .modal-col-6,
+    .modal-col-5,
+    .modal-col-4 {
+        grid-column: span 1 !important;
+    }
+
+    .login-topbar {
+        padding: 18px 20px;
+    }
+
+    .login-card {
+        padding: 32px 22px;
+    }
+}
+
+/* ==========================================================================
+   EXTENSÕES DO EDITOR VISUAL (MÊS / SEMANA / DIA / RECORRÊNCIA / DRAG&DROP)
+   ========================================================================== */
+
+.calendar-widget-card,
+.games-panel-card {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.admin-toolbar-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    flex: 1;
+}
+
+.admin-visual-tip {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    line-height: 1.45;
+}
+
+.admin-visual-tip code {
+    background: rgba(192, 11, 253, 0.25);
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-weight: 700;
+}
+
+/* Alternador de Vistas (Mês / Semana / Dia) */
+.cal-top-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cal-view-switcher {
+    display: inline-flex;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.cal-view-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 7px 14px;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.22s ease;
+}
+
+.cal-view-btn:hover {
+    color: #fff;
+}
+
+.cal-view-btn.active {
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(192, 11, 253, 0.35);
+}
+
+.cal-period-summary {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 12px;
+    border-radius: 14px;
+}
+
+/* Células do Calendário Mensal Aprimoradas */
+.cal-day {
+    aspect-ratio: auto;
+    min-height: 86px;
+    padding: 7px;
+    align-items: stretch;
+    justify-content: flex-start;
+    cursor: pointer;
+}
+
+.cal-day-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.cal-day-number {
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.cal-quick-add-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1px solid rgba(192, 11, 253, 0.5);
+    background: rgba(192, 11, 253, 0.22);
+    color: #fff;
+    font-size: 0.68rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.35;
+    transition: all 0.2s ease;
+}
+
+.cal-day:hover .cal-quick-add-btn {
+    opacity: 1;
+}
+
+.cal-quick-add-btn:hover {
+    background: var(--accent-color);
+    transform: scale(1.12);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.cal-day-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 4px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.cal-event-chip {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    display: block;
+    background: rgba(192, 11, 253, 0.28);
+    border-left: 3px solid var(--accent-color);
+    color: #fff;
+    transition: box-shadow 0.15s ease;
+}
+
+.cal-event-chip.cat-oficial {
+    background: rgba(255, 59, 92, 0.25);
+    border-left-color: #ff3b5c;
+}
+
+.cal-event-chip.cat-treino {
+    background: rgba(0, 212, 255, 0.2);
+    border-left-color: #00d4ff;
+}
+
+.cal-event-chip.cat-torneio {
+    background: rgba(245, 158, 11, 0.25);
+    border-left-color: #f59e0b;
+}
+
+.cal-event-chip.cat-especial {
+    background: rgba(16, 185, 129, 0.25);
+    border-left-color: #10b981;
+}
+
+.cal-event-chip.admin-draggable:hover {
+    box-shadow: 0 0 10px rgba(192, 11, 253, 0.5);
+}
+
+.cal-event-chip.dragging {
+    opacity: 0.4;
+}
+
+.cal-day.drag-over,
+.week-day-row.drag-over {
+    border: 2px dashed #00d4ff !important;
+    background: rgba(0, 212, 255, 0.18) !important;
+}
+
+.cal-more-count {
+    font-size: 0.65rem;
+    color: #d8b4fe;
+    font-weight: 700;
+    text-align: center;
+}
+
+.cal-dot.cat-especial {
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+}
+
+/* Vista Semanal */
+.cal-week-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.week-day-row {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
+    transition: all 0.2s ease;
+}
+
+.week-day-row.today {
+    border-color: rgba(0, 212, 255, 0.5);
+    background: rgba(0, 212, 255, 0.06);
+}
+
+.week-day-row.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(192, 11, 253, 0.22);
+}
+
+.week-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.week-day-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.week-day-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    background: rgba(192, 11, 253, 0.16);
+    padding: 3px 8px;
+    border-radius: 8px;
+}
+
+.week-day-num {
+    font-weight: 700;
+    color: #fff;
+    font-size: 0.92rem;
+}
+
+.week-add-btn {
+    background: rgba(192, 11, 253, 0.16);
+    border: 1px solid rgba(192, 11, 253, 0.4);
+    color: #f0abfc;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.week-add-btn:hover {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.week-day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.week-day-empty {
+    font-size: 0.82rem;
+    color: #64748b;
+    font-style: italic;
+}
+
+.week-event-card {
+    background: rgba(0, 0, 0, 0.28);
+    border-left: 3px solid var(--accent-color);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.week-event-card.cat-oficial { border-left-color: #ff3b5c; }
+.week-event-card.cat-treino { border-left-color: #00d4ff; }
+.week-event-card.cat-torneio { border-left-color: #f59e0b; }
+.week-event-card.cat-especial { border-left-color: #10b981; }
+
+.week-event-card.admin-clickable:hover {
+    background: rgba(192, 11, 253, 0.18);
+}
+
+.week-event-time {
+    font-size: 0.76rem;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rec-mini-tag {
+    background: rgba(192, 11, 253, 0.2);
+    color: #f0abfc;
+    padding: 1px 7px;
+    border-radius: 8px;
+    font-size: 0.68rem;
+}
+
+.week-event-title {
+    font-weight: 700;
+    color: #fff;
+    font-size: 0.92rem;
+}
+
+.week-event-loc {
+    font-size: 0.78rem;
+    color: #94a3b8;
+}
+
+/* Vista Diária */
+.day-view-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: rgba(192, 11, 253, 0.12);
+    border: 1px solid rgba(192, 11, 253, 0.3);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+}
+
+.day-view-date-pill {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #f0abfc;
+}
+
+.day-view-banner h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    color: #fff;
+    margin-top: 2px;
+}
+
+.day-view-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.day-timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border-left: 4px solid var(--accent-color);
+    border-radius: 12px;
+    padding: 12px 16px;
+}
+
+.timeline-hour {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #38bdf8;
+    min-width: 72px;
+}
+
+.timeline-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.timeline-body strong {
+    color: #fff;
+    font-size: 0.98rem;
+}
+
+.timeline-body span {
+    color: #94a3b8;
+    font-size: 0.82rem;
+}
+
+.timeline-edit-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+}
+
+.timeline-edit-btn:hover {
+    background: var(--accent-color);
+}
+
+/* Barra de Filtro de Categorias */
+.category-pills-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.cat-pill {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.cat-pill:hover,
+.cat-pill.active {
+    background: rgba(192, 11, 253, 0.22);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+/* Badges Extras nos Cartões de Jogo */
+.game-tags-wrap {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.game-category-tag.cat-especial {
+    background: rgba(16, 185, 129, 0.18);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.game-level-pill,
+.game-recurrence-pill,
+.game-status-pill {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.game-level-pill {
+    background: rgba(255, 255, 255, 0.07);
+    color: #cbd5e1;
+}
+
+.game-recurrence-pill {
+    background: rgba(0, 212, 255, 0.12);
+    color: #38bdf8;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.game-status-pill.status-open {
+    background: rgba(37, 211, 102, 0.16);
+    color: #4ade80;
+}
+
+.game-status-pill.status-postponed {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+}
+
+.game-status-pill.status-cancelled {
+    background: rgba(255, 59, 92, 0.18);
+    color: #ff6b84;
+}
+
+.game-status-pill.status-completed {
+    background: rgba(192, 11, 253, 0.2);
+    color: #f0abfc;
+}
+
+.game-opponent {
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+}
+
+.game-score-banner {
+    background: linear-gradient(90deg, rgba(192, 11, 253, 0.22), rgba(0, 212, 255, 0.1));
+    border: 1px solid rgba(192, 11, 253, 0.4);
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 0.88rem;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.admin-action-btn.duplicate-game-btn:hover {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: #00d4ff;
+    color: #38bdf8;
+}
+
+/* Modal Grande & Construtor de Recorrência */
+.modal-card.modal-lg {
+    max-width: 740px;
+}
+
+.modal-col-7 { grid-column: span 7; }
+.modal-col-6 { grid-column: span 6; }
+.modal-col-5 { grid-column: span 5; }
+
+.allday-toggle-label {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem !important;
+    color: #f0abfc !important;
+    cursor: pointer;
+}
+
+.allday-toggle-label input {
+    width: auto !important;
+}
+
+.recurrence-builder-box {
+    background: rgba(192, 11, 253, 0.08);
+    border: 1px solid rgba(192, 11, 253, 0.3);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+}
+
+.recurrence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.recurrence-header label {
+    margin-bottom: 0 !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+}
+
+.recurrence-summary-badge {
+    background: rgba(37, 211, 102, 0.16);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    color: #4ade80;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 14px;
+}
+
+.recurrence-count-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 100%;
+}
+
+.recurrence-count-inline input {
+    width: 76px !important;
+    text-align: center;
+}
+
+.recurrence-count-inline span {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+}
+
+.weekdays-selector-group {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.12);
+    text-align: left;
+}
+
+.weekdays-label {
+    display: block;
+    font-size: 0.82rem;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+}
+
+.weekday-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.weekday-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
+    padding: 7px 13px;
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.weekday-pill.active {
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+    border-color: #fff;
+    color: #fff;
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.recent-locations-chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.recent-loc-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.recent-loc-chip {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #cbd5e1;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.74rem;
+    padding: 3px 10px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.recent-loc-chip:hover {
+    background: rgba(192, 11, 253, 0.22);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+.series-option-box {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.checkbox-inline-label {
+    display: flex !important;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.85rem !important;
+    color: #e2e8f0 !important;
+    cursor: pointer;
+    margin-bottom: 0 !important;
+}
+
+.checkbox-inline-label input {
+    width: auto !important;
+    margin-top: 3px;
+}
+
+.security-footer-badges {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.security-footer-badges span {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.security-footer-badges i {
+    color: #4ade80;
+}
+
+/* ==========================================================================
+   CATEGORIAS (MISTO / MASCULINO / FEMININO) & BOTÃO DE INSCRIÇÃO
+   ========================================================================== */
+
+.cal-dot.cat-misto {
+    background: #C00BFD;
+    box-shadow: 0 0 6px #C00BFD;
+}
+
+.cal-dot.cat-masculino {
+    background: #00d4ff;
+    box-shadow: 0 0 6px #00d4ff;
+}
+
+.cal-dot.cat-feminino {
+    background: #ff3b5c;
+    box-shadow: 0 0 6px #ff3b5c;
+}
+
+.game-category-tag.cat-misto {
+    background: rgba(192, 11, 253, 0.2);
+    color: #e879f9;
+    border: 1px solid rgba(192, 11, 253, 0.45);
+}
+
+.game-category-tag.cat-masculino {
+    background: rgba(0, 212, 255, 0.18);
+    color: #38bdf8;
+    border: 1px solid rgba(0, 212, 255, 0.45);
+}
+
+.game-category-tag.cat-feminino {
+    background: rgba(255, 59, 92, 0.18);
+    color: #ff6b84;
+    border: 1px solid rgba(255, 59, 92, 0.45);
+}
+
+.cal-event-chip.cat-misto {
+    background: rgba(192, 11, 253, 0.28);
+    border-left-color: #C00BFD;
+}
+
+.cal-event-chip.cat-masculino {
+    background: rgba(0, 212, 255, 0.22);
+    border-left-color: #00d4ff;
+}
+
+.cal-event-chip.cat-feminino {
+    background: rgba(255, 59, 92, 0.25);
+    border-left-color: #ff3b5c;
+}
+
+.week-event-card.cat-misto { border-left-color: #C00BFD; }
+.week-event-card.cat-masculino { border-left-color: #00d4ff; }
+.week-event-card.cat-feminino { border-left-color: #ff3b5c; }
+
+.game-cta-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.game-register-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    background: linear-gradient(45deg, var(--accent-color), #ff3b5c);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 14px;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(192, 11, 253, 0.35);
+    transition: all 0.25s ease;
+}
+
+.game-register-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(192, 11, 253, 0.6);
+    filter: brightness(1.1);
+}
+
+/* ==========================================================================
+   MODO VISITANTE (APENAS CARDS DE JOGOS) & RESPONSIVIDADE MOBILE (320px - 992px)
+   ========================================================================== */
+
+.calendar-layout.visitor-only-cards {
+    grid-template-columns: minmax(0, 1fr) !important;
+    max-width: 860px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.calendar-layout.visitor-only-cards .calendar-widget-card {
+    display: none !important;
+}
+
+@media (max-width: 992px) {
+    .calendar-layout {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    .calendar-widget-card,
+    .games-panel-card {
+        padding: 16px 12px;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .cal-top-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .cal-view-switcher {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .cal-view-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 7px 8px;
+        font-size: 0.78rem;
+    }
+
+    .cal-nav-btns {
+        justify-content: center;
+    }
+
+    .cal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .cal-weekdays {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+
+    .cal-weekdays span {
+        font-size: 0.62rem;
+        letter-spacing: 0;
+    }
+
+    .cal-days-grid {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 4px;
+    }
+
+    .cal-day {
+        min-height: 54px;
+        padding: 4px 3px;
+        border-radius: 8px;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        transform: none !important;
+    }
+
+    .cal-day.selected,
+    .cal-day:hover {
+        transform: none !important;
+    }
+
+    .cal-day-number {
+        font-size: 0.74rem;
+    }
+
+    .cal-quick-add-btn {
+        width: 16px;
+        height: 16px;
+        font-size: 0.55rem;
+        opacity: 0.85;
+        flex-shrink: 0;
+    }
+
+    .cal-day-chips {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .cal-event-chip {
+        font-size: 0.54rem;
+        padding: 2px 3px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        transform: none !important;
+    }
+
+    .games-panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .games-filter-tabs {
+        width: 100%;
+    }
+
+    .filter-tab {
+        flex: 1;
+        justify-content: center;
+        font-size: 0.78rem;
+        padding: 6px 10px;
+    }
+
+    .games-list {
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .game-card,
+    .game-card:hover {
+        padding: 14px 12px;
+        gap: 12px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        transform: none !important;
+    }
+
+    .game-details {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .game-title {
+        font-size: 1.05rem;
+        word-break: break-word;
+    }
+
+    .game-location-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .game-location-name {
+        word-break: break-word;
+        font-size: 0.86rem;
+    }
+
+    .game-cta-links {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .game-maps-btn,
+    .game-register-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 9px 12px;
+        box-sizing: border-box;
+    }
+
+    .admin-calendar-toolbar {
+        padding: 14px 16px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-toolbar-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .admin-toolbar-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .modal-overlay {
+        padding: 10px;
+    }
+
+    .modal-card,
+    .modal-card.modal-lg {
+        padding: 22px 16px;
+        max-height: 94vh;
+        border-radius: 18px;
+    }
+
+    .modal-header h3 {
+        font-size: 1.05rem;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+
+

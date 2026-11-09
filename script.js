@@ -67,12 +67,13 @@ window.addEventListener('scroll', () => {
 const navbar = document.querySelector('.navbar');
 window.addEventListener('scroll', () => {
     if (navbar) {
+        const isMobile = window.innerWidth <= 768;
         if (window.scrollY > 50) {
-            navbar.style.padding = '15px 50px';
+            navbar.style.padding = isMobile ? '12px 18px' : '15px 50px';
             navbar.style.background = 'rgba(8, 8, 10, 0.95)';
             navbar.style.boxShadow = '0 5px 20px rgba(0,0,0,0.5)';
         } else {
-            navbar.style.padding = '20px 50px';
+            navbar.style.padding = isMobile ? '14px 18px' : '20px 50px';
             navbar.style.background = 'rgba(12, 12, 14, 0.8)';
             navbar.style.boxShadow = 'none';
         }
