@@ -1124,7 +1124,9 @@
         }
 
         if (filterMonthBtn) {
-            filterMonthBtn.addEventListener('click', () => {
+            filterMonthBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 selectedDateStr = null;
                 filterMode = 'month';
                 updateFilterButtonsUI();
@@ -1133,7 +1135,9 @@
         }
 
         if (filterWeekBtn) {
-            filterWeekBtn.addEventListener('click', () => {
+            filterWeekBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 filterMode = 'week';
                 updateFilterButtonsUI();
                 renderGamesList();
@@ -1141,7 +1145,9 @@
         }
 
         if (filterUpcomingBtn) {
-            filterUpcomingBtn.addEventListener('click', () => {
+            filterUpcomingBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 selectedDateStr = null;
                 filterMode = 'upcoming';
                 updateFilterButtonsUI();
@@ -1150,7 +1156,9 @@
         }
 
         if (clearDayFilterBtn) {
-            clearDayFilterBtn.addEventListener('click', () => {
+            clearDayFilterBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 selectedDateStr = null;
                 filterMode = 'month';
                 updateFilterButtonsUI();
@@ -1159,7 +1167,9 @@
         }
 
         categoryPills.forEach(pill => {
-            pill.addEventListener('click', () => {
+            pill.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 categoryPills.forEach(p => p.classList.remove('active'));
                 pill.classList.add('active');
                 selectedCategory = pill.getAttribute('data-cat') || 'all';
