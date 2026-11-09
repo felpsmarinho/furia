@@ -1196,24 +1196,27 @@ footer p {
     border-left: 4px solid var(--accent-color);
     border-radius: 16px;
     padding: 20px;
-    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.25s ease;
     align-items: flex-start;
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    overflow: hidden;
+    flex-shrink: 0;
+    min-height: fit-content;
     box-sizing: border-box;
 }
 
 .game-card:hover {
     background: rgba(148, 7, 242, 0.12);
     border-color: rgba(192, 11, 253, 0.4);
-    transform: none;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
 }
 
 .game-date-badge {
     min-width: 74px;
+    width: 74px;
+    flex-shrink: 0;
     background: linear-gradient(160deg, rgba(192, 11, 253, 0.25), rgba(1, 12, 44, 0.9));
     border: 1px solid rgba(192, 11, 253, 0.4);
     border-radius: 14px;
@@ -2888,13 +2891,19 @@ footer p {
 
 .calendar-layout.visitor-only-cards {
     grid-template-columns: minmax(0, 1fr) !important;
-    max-width: 860px;
+    max-width: 920px;
     margin: 0 auto;
     width: 100%;
 }
 
 .calendar-layout.visitor-only-cards .calendar-widget-card {
     display: none !important;
+}
+
+.calendar-layout.visitor-only-cards .games-list {
+    max-height: 680px;
+    overflow-y: auto;
+    padding-right: 8px;
 }
 
 @media (max-width: 992px) {
