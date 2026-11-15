@@ -20,6 +20,7 @@ html {
     background-color: var(--bg-color);
     color: var(--text-color);
     overflow-x: hidden;
+    overflow-x: clip;
     width: 100%;
     max-width: 100%;
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cpath fill='%23C00BFD' stroke='%23ffffff' stroke-width='1.5' stroke-linejoin='round' d='M11 0L1 13h7v11L23 11h-8Z'/%3E%3C/svg%3E") 11 0, auto;
@@ -33,23 +34,39 @@ a, button, .menu-toggle, .btn, input, textarea, select {
 body {
     position: relative;
     overflow-x: hidden;
+    overflow-x: clip;
     width: 100%;
     max-width: 100%;
 }
 
-/* Custom Cursor Glow */
+/* Custom Cursor Glow (composited via transform, sem mix-blend-mode readback) */
 #cursor-glow {
     position: fixed;
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 60%);
-    border-radius: 50%;
+    top: 0;
+    left: 0;
+    width: 110px;
+    height: 110px;
     pointer-events: none;
-    transform: translate(-50%, -50%);
+    transform: translate3d(-200px, -200px, 0) translate(-50%, -50%);
     z-index: 9999;
-    mix-blend-mode: screen;
-    opacity: 0.5;
-    transition: width 0.3s, height 0.3s;
+    will-change: transform;
+    contain: layout style paint;
+}
+
+#cursor-glow::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(192, 11, 253, 0.45) 0%, rgba(148, 7, 242, 0.16) 42%, transparent 70%);
+    opacity: 0.65;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+#cursor-glow.is-hovering::after {
+    transform: scale(1.4);
+    opacity: 0.92;
 }
 
 /* Typography */
@@ -75,7 +92,13 @@ h1, h2, h3, .logo-text {
     backdrop-filter: blur(10px);
     z-index: 1000;
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    transition: all 0.3s ease;
+    transition: padding 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.navbar.scrolled {
+    padding: 15px 50px;
+    background: rgba(8, 8, 10, 0.95);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
 }
 
 .logo-container {
@@ -119,10 +142,12 @@ nav a::after {
     position: absolute;
     bottom: -5px;
     left: 0;
-    width: 0;
+    width: 100%;
     height: 2px;
     background: var(--accent-color);
-    transition: width 0.3s ease;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s ease;
 }
 
 nav a:hover {
@@ -130,7 +155,7 @@ nav a:hover {
 }
 
 nav a:hover::after {
-    width: 100%;
+    transform: scaleX(1);
 }
 
 .menu-toggle {
@@ -190,6 +215,7 @@ nav a:hover::after {
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+    overflow-x: clip;
 }
 
 .section:not(.hero) {
@@ -223,13 +249,9 @@ nav a:hover::after {
 
 .hero-video-bg {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
-    transform: translate(-50%, -50%);
+    inset: 0;
+    width: 100%;
+    height: 100%;
     z-index: 0;
     object-fit: cover;
 }
@@ -282,34 +304,34 @@ nav a:hover::after {
 
 .shape {
     position: absolute;
-    filter: blur(100px);
     border-radius: 50%;
     animation: float 20s infinite ease-in-out;
+    will-change: transform;
 }
 
 .shape-1 {
-    width: 500px;
-    height: 500px;
-    background: var(--accent-glow);
-    top: -150px;
-    left: -100px;
+    width: 720px;
+    height: 720px;
+    background: radial-gradient(circle, rgba(192, 11, 253, 0.35) 0%, rgba(192, 11, 253, 0.1) 45%, transparent 72%);
+    top: -240px;
+    left: -180px;
 }
 
 .shape-2 {
-    width: 400px;
-    height: 400px;
-    background: rgba(29, 53, 87, 0.6);
-    bottom: 0px;
-    right: -100px;
+    width: 640px;
+    height: 640px;
+    background: radial-gradient(circle, rgba(29, 53, 87, 0.55) 0%, rgba(29, 53, 87, 0.18) 48%, transparent 72%);
+    bottom: -100px;
+    right: -180px;
     animation-delay: -5s;
 }
 
 .shape-3 {
-    width: 300px;
-    height: 300px;
-    background: rgba(230, 57, 70, 0.3);
-    top: 40%;
-    left: 50%;
+    width: 520px;
+    height: 520px;
+    background: radial-gradient(circle, rgba(230, 57, 70, 0.25) 0%, rgba(230, 57, 70, 0.08) 48%, transparent 72%);
+    top: 35%;
+    left: 42%;
     animation-delay: -10s;
 }
 
@@ -420,6 +442,7 @@ nav a:hover::after {
     height: 100%;
     border: none;
     z-index: 1;
+    pointer-events: none;
 }
 
 .map-overlay {
@@ -500,7 +523,7 @@ footer p {
 .hidden {
     opacity: 0;
     transform: translateY(40px);
-    transition: all 0.8s ease-out;
+    transition: opacity 0.65s ease-out, transform 0.65s ease-out;
 }
 
 .show {
@@ -517,7 +540,7 @@ footer p {
     transition-delay: var(--delay);
 }
 
-/* Glitch effect */
+/* Glitch effect (compositor-friendly via clip-path + transform, sem clip: rect repaint) */
 .glitch {
     position: relative;
     display: inline-block;
@@ -530,41 +553,48 @@ footer p {
     left: 0;
     width: 100%;
     height: 100%;
-    opacity: 0.8;
+    opacity: 0.85;
+    pointer-events: none;
+    will-change: transform, clip-path;
 }
 
 .glitch::before {
     left: 3px;
     text-shadow: -2px 0 var(--accent-color);
-    clip: rect(44px, 450px, 56px, 0);
-    animation: glitch-anim 3s infinite linear alternate-reverse;
+    clip-path: inset(40% 0 45% 0);
+    animation: glitch-anim 3s infinite steps(1) alternate-reverse;
 }
 
 .glitch::after {
     left: -3px;
     text-shadow: -2px 0 #00d4ff;
-    clip: rect(44px, 450px, 56px, 0);
-    animation: glitch-anim2 3s infinite linear alternate-reverse;
+    clip-path: inset(60% 0 25% 0);
+    animation: glitch-anim2 3s infinite steps(1) alternate-reverse;
+}
+
+.hero.is-offscreen .glitch::before,
+.hero.is-offscreen .glitch::after {
+    animation-play-state: paused;
 }
 
 @keyframes glitch-anim {
-    0% { clip: rect(21px, 9999px, 86px, 0); }
-    10% { clip: rect(62px, 9999px, 30px, 0); }
-    20% { clip: rect(10px, 9999px, 12px, 0); }
-    30% { clip: rect(89px, 9999px, 71px, 0); }
-    40% { clip: rect(42px, 9999px, 55px, 0); }
-    50% { clip: rect(74px, 9999px, 14px, 0); }
-    100% { clip: rect(74px, 9999px, 14px, 0); }
+    0% { clip-path: inset(20% 0 60% 0); transform: translate3d(-2px, 0, 0); }
+    12% { clip-path: inset(62% 0 18% 0); transform: translate3d(2px, 0, 0); }
+    24% { clip-path: inset(10% 0 74% 0); transform: translate3d(-1px, 0, 0); }
+    36% { clip-path: inset(42% 0 38% 0); transform: translate3d(2px, 0, 0); }
+    48% { clip-path: inset(72% 0 10% 0); transform: translate3d(-1px, 0, 0); }
+    58% { clip-path: inset(0 0 100% 0); transform: translate3d(0, 0, 0); }
+    100% { clip-path: inset(0 0 100% 0); transform: translate3d(0, 0, 0); }
 }
 
 @keyframes glitch-anim2 {
-    0% { clip: rect(65px, 9999px, 100px, 0); }
-    10% { clip: rect(3px, 9999px, 59px, 0); }
-    20% { clip: rect(76px, 9999px, 81px, 0); }
-    30% { clip: rect(23px, 9999px, 4px, 0); }
-    40% { clip: rect(98px, 9999px, 21px, 0); }
-    50% { clip: rect(15px, 9999px, 68px, 0); }
-    100% { clip: rect(15px, 9999px, 68px, 0); }
+    0% { clip-path: inset(64% 0 12% 0); transform: translate3d(2px, 0, 0); }
+    12% { clip-path: inset(6% 0 72% 0); transform: translate3d(-2px, 0, 0); }
+    24% { clip-path: inset(48% 0 28% 0); transform: translate3d(1px, 0, 0); }
+    36% { clip-path: inset(22% 0 58% 0); transform: translate3d(-2px, 0, 0); }
+    48% { clip-path: inset(78% 0 6% 0); transform: translate3d(1px, 0, 0); }
+    58% { clip-path: inset(0 0 100% 0); transform: translate3d(0, 0, 0); }
+    100% { clip-path: inset(0 0 100% 0); transform: translate3d(0, 0, 0); }
 }
 
 /* Forms and New Sections */
@@ -701,6 +731,10 @@ footer p {
         max-width: 100vw;
         left: 0;
         right: 0;
+    }
+
+    .navbar.scrolled {
+        padding: 12px 18px;
     }
 
     .logo {
@@ -1460,12 +1494,18 @@ footer p {
     justify-content: center;
     padding: 20px;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay:not(.active) {
+    backdrop-filter: none;
 }
 
 .modal-overlay.active {
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
 }
 
@@ -3154,6 +3194,180 @@ footer p {
     .modal-footer .btn {
         width: 100%;
         text-align: center;
+    }
+}
+
+/* ==========================================================================
+   OTIMIZAÇÕES DE FLUIDEZ PARA FIREFOX (GECKO / WEBRENDER) & REDUCED MOTION
+   - Evita múltiplos passes de backdrop-filter e filter: drop-shadow em camadas fixas
+   - Substitui gradientes de secção em altura total e box-shadows com raios grandes por
+     cores sólidas da paleta + bordas neon nítidas (evita repaints/tiles lentos no WebRender)
+   - Restringe transições a propriedades compositadas (transform/opacity/cor) em vez de "all"
+   ========================================================================== */
+
+html.is-firefox #cursor-glow {
+    width: 92px;
+    height: 92px;
+}
+
+html.is-firefox #cursor-glow::after {
+    opacity: 0.72;
+    transition: transform 0.16s ease;
+}
+
+html.is-firefox .navbar {
+    backdrop-filter: none;
+    background: rgba(8, 10, 24, 0.92);
+}
+
+html.is-firefox .navbar.scrolled {
+    background: rgba(6, 8, 18, 0.97);
+    border-bottom-color: rgba(192, 11, 253, 0.32);
+    box-shadow: none;
+}
+
+html.is-firefox .logo {
+    filter: none;
+}
+
+html.is-firefox .section {
+    contain: layout style;
+}
+
+html.is-firefox .section:not(.hero) {
+    background: var(--bg-color);
+}
+
+html.is-firefox .section::after {
+    height: 2px;
+    box-shadow: none;
+    opacity: 0.9;
+}
+
+html.is-firefox .secondary-btn {
+    backdrop-filter: none;
+    background: rgba(8, 12, 32, 0.9);
+}
+
+html.is-firefox .card,
+html.is-firefox .join-card,
+html.is-firefox .contact-form,
+html.is-firefox .success-card {
+    backdrop-filter: none;
+    background: rgba(16, 12, 54, 0.9);
+    border: 1px solid rgba(192, 11, 253, 0.3);
+    border-top-color: rgba(255, 255, 255, 0.14);
+    box-shadow: none;
+}
+
+html.is-firefox .card:hover,
+html.is-firefox .join-card:hover {
+    background: rgba(25, 16, 74, 0.96);
+    border-color: rgba(192, 11, 253, 0.72);
+    border-top-color: rgba(255, 255, 255, 0.24);
+    box-shadow: none;
+}
+
+html.is-firefox .calendar-widget-card,
+html.is-firefox .games-panel-card,
+html.is-firefox .admin-calendar-toolbar,
+html.is-firefox .login-card,
+html.is-firefox .modal-card {
+    backdrop-filter: none;
+    background: rgba(18, 11, 56, 0.92);
+    border: 1px solid rgba(192, 11, 253, 0.34);
+    border-top-color: rgba(255, 255, 255, 0.15);
+    box-shadow: none;
+}
+
+html.is-firefox .map-container {
+    background: #070d2e;
+    border-color: rgba(192, 11, 253, 0.45);
+    box-shadow: none;
+}
+
+html.is-firefox .back-home-link,
+html.is-firefox .connection-pill {
+    backdrop-filter: none;
+    background: rgba(14, 18, 48, 0.9);
+}
+
+html.is-firefox .modal-overlay.active {
+    backdrop-filter: none;
+    background: rgba(2, 6, 22, 0.94);
+}
+
+html.is-firefox .btn,
+html.is-firefox .primary-btn,
+html.is-firefox .primary-btn:hover,
+html.is-firefox .whatsapp-btn,
+html.is-firefox .whatsapp-btn:hover,
+html.is-firefox .nav-admin-btn,
+html.is-firefox .nav-admin-btn:hover,
+html.is-firefox .cal-nav-btn,
+html.is-firefox .cal-nav-btn:hover,
+html.is-firefox .cal-today-btn,
+html.is-firefox .cal-today-btn:hover,
+html.is-firefox .filter-tab,
+html.is-firefox .filter-tab:hover,
+html.is-firefox .filter-tab.active,
+html.is-firefox .game-card,
+html.is-firefox .game-card:hover,
+html.is-firefox .game-maps-btn,
+html.is-firefox .game-maps-btn:hover,
+html.is-firefox .game-register-btn,
+html.is-firefox .game-register-btn:hover,
+html.is-firefox .admin-action-btn,
+html.is-firefox .cal-view-btn.active,
+html.is-firefox .cal-dot,
+html.is-firefox .cal-day.selected {
+    box-shadow: none;
+}
+
+html.is-firefox .btn,
+html.is-firefox .nav-admin-btn,
+html.is-firefox .cal-nav-btn,
+html.is-firefox .cal-today-btn,
+html.is-firefox .filter-tab,
+html.is-firefox .game-maps-btn,
+html.is-firefox .game-register-btn,
+html.is-firefox .admin-action-btn {
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+html.is-firefox .card,
+html.is-firefox .join-card,
+html.is-firefox .game-card {
+    transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+}
+
+html.is-firefox .hidden {
+    transition: opacity 0.45s ease-out, transform 0.45s ease-out;
+}
+
+@media (max-width: 768px) {
+    html.is-firefox nav {
+        backdrop-filter: none;
+        background: rgba(1, 12, 44, 0.98);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .glitch::before,
+    .glitch::after,
+    .shape {
+        animation: none;
+    }
+
+    .hidden,
+    .card,
+    .join-card,
+    .btn {
+        transition: none;
     }
 }
 
