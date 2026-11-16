@@ -9,12 +9,13 @@ Landing page oficial e plataforma de divulgação de jogos do grupo **Fúria Vol
 ## ✨ Funcionalidades Principais
 
 - **Hero Section com Vídeo em Background**: Vídeo *indoor* em reprodução contínua (`public/video/indoor.mp4`), efeito *glitch* no título principal, cursor personalizado em formato de raio e brilho dinâmico no ponteiro.
-- **Identidade Visual Glassmorphism**: Paleta em azul profundo (`#010C2C`) e roxo neon (`#9407F2` / `#C00BFD`) com cartões translúcidos, divisórias em neon e animações de revelação ao fazer *scroll*.
+- **Identidade Visual Glassmorphism**: Paleta em azul profundo (`#010C2C`) e roxo neon (`#9407F2` / `#C00BFD`) com cartões translúcidos, divisórias em neon, animações de revelação ao fazer *scroll* e otimizações específicas para o motor Gecko/WebRender do Firefox.
+- **4 Pilares Expansíveis e Editáveis ("Esse é o nosso Espírito!")**: Cards clicáveis (**Organização**, **Respeito**, **Evolução** e **Bons Jogos**) com destaque para o VolleyDash + lista automática de próximos jogos, galeria de fotos com *lightbox*, agenda de treinos/parceiros e *takes*/vídeos do Time Intermediário — totalmente editáveis pelos administradores autenticados.
 - **Calendário Dinâmico de Jogos (Supabase)**:
   - **Visão de Visitante**: Lista interativa de jogos e treinos com filtros rápidos por período (`Mês`, `Semana`, `Próximos`) e por categoria (`Todos`, `Misto`, `Masculino`, `Feminino`), além de links diretos para o Google Maps e inscrição externa.
-  - **Painel & Editor Visual Administrativo**: Acesso restrito via `login.html` com Supabase Auth, permitindo vistas **Mensal**, **Semanal** e **Diária**, criação rápida de jogos por dia (`+`), séries recorrentes (`Único`, `Diário`, `Semanal`, `Quinzenal`, `Mensal`), edição/duplicação/exclusão em lote e reagendamento via **Drag & Drop**.
+  - **Painel & Editor Visual Administrativo**: Acesso restrito via `login.html` com Supabase Auth, permitindo vistas **Mensal**, **Semanal** e **Diária**, criação rápida de jogos por dia (`+`), séries recorrentes (`Único`, `Diário`, `Semanal`, `Quinzenal`, `Mensal`), edição/duplicação/exclusão em lote, reagendamento via **Drag & Drop** e edição completa do conteúdo, fotos e vídeos dos 4 cards do Espírito.
 - **Segurança & Banco de Dados (PostgreSQL + RLS)**:
-  - Políticas de **Row Level Security (RLS)** forçadas na tabela `public.games` (leitura pública; escrita restrita a administradores validados por função `SECURITY DEFINER`).
+  - Políticas de **Row Level Security (RLS)** forçadas nas tabelas `public.games` e `public.spirit_cards` (leitura pública; escrita restrita a administradores validados por função `SECURITY DEFINER`).
   - Proteção contra força bruta no login (`LoginSecurityGuard`), campo *honeypot* anti-bot, monitor de inatividade (30 minutos) e *bridge* de sessão entre páginas.
 - **Nossa Quadra (Google Maps)**: Mapa incorporado com redirecionamento direto ao clicar para a localização oficial no Google Maps.
 - **Quero Conhecer (WhatsApp)**: Chamada direta para contacto com o grupo via WhatsApp.

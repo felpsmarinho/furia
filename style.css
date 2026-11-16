@@ -344,7 +344,15 @@ nav a:hover::after {
 /* Spirit Section */
 .spirit h2 {
     font-size: 3rem;
-    margin-bottom: 60px;
+    margin-bottom: 14px;
+}
+
+.spirit-subtitle {
+    font-size: 1.08rem;
+    color: #cbd5e1;
+    max-width: 700px;
+    margin: 0 auto 44px auto;
+    line-height: 1.55;
 }
 
 .cards {
@@ -3198,6 +3206,685 @@ footer p {
 }
 
 /* ==========================================================================
+   CARDS EXPANSÍVEIS ("ESSE É O NOSSO ESPÍRITO!") & MODAL ADMIN
+   ========================================================================== */
+
+.admin-spirit-toolbar {
+    margin-bottom: 28px;
+    text-align: left;
+}
+
+.spirit-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+    align-items: stretch;
+}
+
+.spirit-card {
+    padding: 34px 22px 28px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    height: 100%;
+    min-width: 0;
+}
+
+.spirit-card-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    cursor: pointer;
+    outline: none;
+    gap: 8px;
+}
+
+.spirit-card-top:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 6px;
+    border-radius: 12px;
+}
+
+.spirit-card-header-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 28px;
+    margin-bottom: 6px;
+    gap: 8px;
+}
+
+.spirit-order-chip {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #d8b4fe;
+    background: rgba(192, 11, 253, 0.16);
+    border: 1px solid rgba(192, 11, 253, 0.35);
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.spirit-edit-btn {
+    padding: 4px 10px;
+    font-size: 0.76rem;
+    border-radius: 16px;
+    border-color: rgba(192, 11, 253, 0.45);
+    background: rgba(148, 7, 242, 0.22);
+    color: #f3e8ff;
+}
+
+.spirit-edit-btn:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+.spirit-card .icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+}
+
+.spirit-card h3 {
+    font-size: 1.45rem;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.spirit-card .spirit-card-top p {
+    font-size: 0.98rem;
+    line-height: 1.55;
+    color: #cbd5e1;
+    margin-bottom: 14px;
+}
+
+.spirit-toggle-hint {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: #f0abfc;
+    background: rgba(192, 11, 253, 0.14);
+    border: 1px solid rgba(192, 11, 253, 0.38);
+    padding: 6px 14px;
+    border-radius: 20px;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.spirit-card:hover .spirit-toggle-hint {
+    background: rgba(192, 11, 253, 0.28);
+    color: #fff;
+}
+
+/* Estado Expandido (Largura Total na Grelha) */
+.spirit-card.expanded {
+    grid-column: 1 / -1;
+    text-align: left;
+    padding: 32px;
+    border-color: rgba(192, 11, 253, 0.65);
+    background: rgba(25, 16, 74, 0.92);
+}
+
+.spirit-card.expanded:hover {
+    transform: none;
+}
+
+.spirit-card.expanded .spirit-card-top {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+        "meta meta meta"
+        "icon title hint"
+        "icon summary hint";
+    align-items: center;
+    text-align: left;
+    column-gap: 18px;
+    row-gap: 4px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.spirit-card.expanded .spirit-card-header-meta {
+    grid-area: meta;
+    margin-bottom: 10px;
+}
+
+.spirit-card.expanded .icon {
+    grid-area: icon;
+    font-size: 2.5rem;
+    margin-bottom: 0;
+}
+
+.spirit-card.expanded h3 {
+    grid-area: title;
+    margin-bottom: 0;
+    font-size: 1.65rem;
+}
+
+.spirit-card.expanded .spirit-card-top p {
+    grid-area: summary;
+    margin-bottom: 0;
+    font-size: 0.96rem;
+}
+
+.spirit-card.expanded .spirit-toggle-hint {
+    grid-area: hint;
+    margin-top: 0;
+    justify-self: end;
+}
+
+.spirit-expanded-body {
+    margin-top: 24px;
+    animation: spiritExpandFade 0.24s ease-out;
+}
+
+@keyframes spiritExpandFade {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.spirit-expanded-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+}
+
+.spirit-expanded-grid.single-col {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.spirit-expanded-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #f0abfc;
+    background: rgba(192, 11, 253, 0.16);
+    border: 1px solid rgba(192, 11, 253, 0.4);
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+}
+
+.spirit-expanded-text {
+    color: #e2e8f0;
+    font-size: 1.03rem;
+    line-height: 1.7;
+    margin-bottom: 18px;
+    white-space: pre-line;
+}
+
+.spirit-highlights-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.spirit-highlights-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 10px 14px;
+}
+
+.spirit-highlights-list li i {
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.spirit-expanded-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.spirit-expanded-extras {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+}
+
+/* Lista Integrada de Próximos Jogos (Card Organização) */
+.spirit-games-box {
+    background: rgba(6, 10, 34, 0.75);
+    border: 1px solid rgba(192, 11, 253, 0.3);
+    border-radius: 16px;
+    padding: 18px;
+}
+
+.spirit-subblock-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.spirit-subblock-header h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.spirit-inline-link {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #f0abfc;
+    text-decoration: none;
+}
+
+.spirit-inline-link:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.spirit-mini-games-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.spirit-mini-game-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.spirit-mini-game-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 58px;
+    background: rgba(148, 7, 242, 0.22);
+    border: 1px solid rgba(192, 11, 253, 0.4);
+    border-radius: 10px;
+    padding: 5px 6px;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.spirit-mini-game-date small {
+    font-size: 0.65rem;
+    color: #e9d5ff;
+}
+
+.spirit-mini-game-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.spirit-mini-game-info strong {
+    font-size: 0.92rem;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.spirit-mini-game-info span {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.spirit-mini-game-cta {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+    padding: 7px 12px;
+    border-radius: 18px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.spirit-empty-note {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Galeria de Fotos & Takes/Vídeos */
+.spirit-media-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 14px;
+}
+
+.spirit-media-item {
+    display: flex;
+    flex-direction: column;
+    background: rgba(6, 10, 34, 0.82);
+    border: 1px solid rgba(192, 11, 253, 0.32);
+    border-radius: 14px;
+    overflow: hidden;
+    text-align: left;
+    color: #e2e8f0;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+.spirit-media-image-btn {
+    padding: 0;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.spirit-media-image-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-color);
+}
+
+.spirit-media-image-btn img,
+.spirit-media-video video {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    display: block;
+    background: #020617;
+}
+
+.spirit-media-caption {
+    padding: 10px 12px;
+    font-size: 0.84rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+}
+
+.spirit-media-external-video {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    text-decoration: none;
+}
+
+.spirit-media-external-video:hover {
+    border-color: var(--accent-color);
+    background: rgba(148, 7, 242, 0.16);
+}
+
+.spirit-external-play-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.spirit-external-video-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.spirit-external-video-meta strong {
+    font-size: 0.92rem;
+    color: #fff;
+}
+
+.spirit-external-video-meta span {
+    font-size: 0.82rem;
+    color: #cbd5e1;
+}
+
+/* Modal Admin de Edição dos Cards */
+.spirit-games-toggle-box {
+    margin-bottom: 18px;
+}
+
+.spirit-upload-photo-btn {
+    background: rgba(192, 11, 253, 0.22);
+    border: 1px solid rgba(192, 11, 253, 0.45);
+    color: #f3e8ff;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0 !important;
+}
+
+.spirit-upload-photo-btn:hover {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.spirit-media-add-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.spirit-media-add-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.spirit-media-admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.spirit-media-empty {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.spirit-media-admin-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.spirit-media-admin-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.spirit-media-thumb {
+    width: 44px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.spirit-media-kind-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: 8px;
+    background: rgba(0, 212, 255, 0.14);
+    color: #38bdf8;
+    flex-shrink: 0;
+}
+
+.spirit-media-admin-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.spirit-media-admin-text strong {
+    font-size: 0.8rem;
+    color: #fff;
+}
+
+.spirit-media-admin-text span {
+    font-size: 0.76rem;
+    color: #94a3b8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.spirit-modal-footer {
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.spirit-modal-footer-right {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Lightbox de Fotos */
+.spirit-lightbox-content {
+    position: relative;
+    max-width: 900px;
+    width: 100%;
+    background: #060a22;
+    border: 1px solid rgba(192, 11, 253, 0.5);
+    border-radius: 18px;
+    padding: 16px;
+    text-align: center;
+}
+
+.spirit-lightbox-content img {
+    max-width: 100%;
+    max-height: 75vh;
+    border-radius: 12px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.spirit-lightbox-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+}
+
+.spirit-lightbox-caption {
+    margin-top: 12px;
+    color: #e2e8f0;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 1100px) {
+    .spirit-cards-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .spirit-expanded-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .spirit-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .spirit-card {
+        padding: 28px 18px 24px;
+    }
+
+    .spirit-card.expanded {
+        padding: 22px 16px;
+    }
+
+    .spirit-card.expanded .spirit-card-top {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "meta"
+            "icon"
+            "title"
+            "summary"
+            "hint";
+        text-align: center;
+        justify-items: center;
+        gap: 10px;
+    }
+
+    .spirit-card.expanded .spirit-toggle-hint {
+        justify-self: center;
+    }
+
+    .spirit-mini-game-item {
+        grid-template-columns: auto 1fr;
+    }
+
+    .spirit-mini-game-cta {
+        grid-column: 1 / -1;
+        justify-content: center;
+    }
+
+    .spirit-media-add-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+/* ==========================================================================
    OTIMIZAÇÕES DE FLUIDEZ PARA FIREFOX (GECKO / WEBRENDER) & REDUCED MOTION
    - Evita múltiplos passes de backdrop-filter e filter: drop-shadow em camadas fixas
    - Substitui gradientes de secção em altura total e box-shadows com raios grandes por
@@ -3250,6 +3937,7 @@ html.is-firefox .secondary-btn {
 }
 
 html.is-firefox .card,
+html.is-firefox .spirit-card,
 html.is-firefox .join-card,
 html.is-firefox .contact-form,
 html.is-firefox .success-card {
@@ -3261,11 +3949,24 @@ html.is-firefox .success-card {
 }
 
 html.is-firefox .card:hover,
+html.is-firefox .spirit-card:hover,
+html.is-firefox .spirit-card.expanded,
 html.is-firefox .join-card:hover {
     background: rgba(25, 16, 74, 0.96);
     border-color: rgba(192, 11, 253, 0.72);
     border-top-color: rgba(255, 255, 255, 0.24);
     box-shadow: none;
+}
+
+html.is-firefox .spirit-games-box,
+html.is-firefox .spirit-mini-game-item,
+html.is-firefox .spirit-media-item,
+html.is-firefox .spirit-lightbox-content {
+    box-shadow: none;
+}
+
+html.is-firefox .spirit-media-item {
+    transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 html.is-firefox .calendar-widget-card,
@@ -3359,7 +4060,8 @@ html.is-firefox .hidden {
 
     .glitch::before,
     .glitch::after,
-    .shape {
+    .shape,
+    .spirit-expanded-body {
         animation: none;
     }
 

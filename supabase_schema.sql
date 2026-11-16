@@ -119,3 +119,54 @@ create policy "games_admin_delete"
     for delete
     to authenticated
     using ((select private.is_furia_admin()));
+
+-- 8. Tabela pública dos 4 Cards Expansíveis ("Esse é o nosso Espírito!")
+create table if not exists public.spirit_cards (
+    slug text primary key check (slug in ('organizacao', 'respeito', 'evolucao', 'bons_jogos')),
+    title text not null check (char_length(trim(title)) between 2 and 80),
+    icon text not null default 'fa-solid fa-bolt',
+    summary text not null check (char_length(trim(summary)) between 2 and 280),
+    badge text check (badge is null or char_length(badge) <= 80),
+    content text not null check (char_length(trim(content)) between 2 and 4000),
+    highlights jsonb not null default '[]'::jsonb,
+    media_items jsonb not null default '[]'::jsonb,
+    cta_label text check (cta_label is null or char_length(cta_label) <= 80),
+    cta_url text,
+    show_games_list boolean not null default false,
+    display_order int not null default 1 check (display_order between 1 and 10),
+    updated_by uuid references auth.users(id) on delete set null default auth.uid(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_spirit_cards_order on public.spirit_cards (display_order asc);
+
+grant select on table public.spirit_cards to anon, authenticated;
+grant insert, update, delete on table public.spirit_cards to authenticated;
+
+alter table public.spirit_cards enable row level security;
+alter table public.spirit_cards force row level security;
+
+create policy "spirit_cards_public_select"
+    on public.spirit_cards
+    for select
+    to anon, authenticated
+    using (true);
+
+create policy "spirit_cards_admin_insert"
+    on public.spirit_cards
+    for insert
+    to authenticated
+    with check ((select private.is_furia_admin()));
+
+create policy "spirit_cards_admin_update"
+    on public.spirit_cards
+    for update
+    to authenticated
+    using ((select private.is_furia_admin()))
+    with check ((select private.is_furia_admin()));
+
+create policy "spirit_cards_admin_delete"
+    on public.spirit_cards
+    for delete
+    to authenticated
+    using ((select private.is_furia_admin()));

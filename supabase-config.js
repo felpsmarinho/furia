@@ -12,6 +12,96 @@ const SUPABASE_CONFIG = {
 
 const NO_MAP_SENTINEL = 'https://no-map.furia.local';
 const NO_STATUS_SENTINEL = '__no_status__';
+const SPIRIT_CARD_SENTINEL = '__SPIRIT_CARD__';
+const SPIRIT_CARD_MAPS_SENTINEL = 'https://spirit-card.furia.local';
+const SPIRIT_STORAGE_KEY = 'furia_spirit_cards_v1';
+
+const DEFAULT_SPIRIT_CARDS = [
+    {
+        slug: 'organizacao',
+        display_order: 1,
+        icon: 'fa-solid fa-clipboard-check',
+        title: 'Organização',
+        summary: 'Listas de presença organizadas, gestão de vagas e inscrições oficiais pelo VolleyDash.',
+        badge: 'VolleyDash & Lista de Jogos',
+        content: 'Na Fúria, cada jogo e treino começa com planeamento claro. Utilizamos o VolleyDash para organizar as listas de presença, controlar vagas por nível e manter os horários sempre atualizados para toda a equipa.',
+        highlights: [
+            'Inscrição prática e lista de espera automática através do VolleyDash',
+            'Vagas organizadas por categoria e nível (Iniciante, Intermediário e Avançado)',
+            'Confirmação antecipada de presença e acesso rápido à lista de próximos jogos'
+        ],
+        media_items: [],
+        cta_label: 'Abrir série no VolleyDash',
+        cta_url: 'https://www.volleydash.online/series/c8be0e',
+        show_games_list: true
+    },
+    {
+        slug: 'respeito',
+        display_order: 2,
+        icon: 'fa-solid fa-users',
+        title: 'Respeito',
+        summary: 'Comunidade acolhedora, jogo limpo e parceria verdadeira dentro e fora de quadra.',
+        badge: 'Comunidade Fúria',
+        content: 'Mais do que pontos no marcador, valorizamos as pessoas em quadra. Construímos um grupo unido, respeitoso e aberto onde cada atleta se sente bem-vindo para jogar, aprender e partilhar bons momentos juntos.',
+        highlights: [
+            'Ambiente positivo, incentivos reais e zero tolerância a atitudes tóxicas',
+            'Integração constante de novos membros com a comunidade da Fúria',
+            'Registos fotográficos dos nossos encontros, celebrações e espírito de equipa'
+        ],
+        media_items: [
+            {
+                type: 'image',
+                url: 'public/img/hero_bg.jpg',
+                caption: 'Comunidade Fúria reunida no pavilhão antes dos jogos'
+            }
+        ],
+        cta_label: 'Conhecer a Comunidade',
+        cta_url: 'https://wa.me/351911977113',
+        show_games_list: false
+    },
+    {
+        slug: 'evolucao',
+        display_order: 3,
+        icon: 'fa-solid fa-arrow-trend-up',
+        title: 'Evolução',
+        summary: 'Treinos consistentes, dias definidos na semana e intercâmbios com equipas parceiras.',
+        badge: 'Treinos, Dias & Parceiros',
+        content: 'A nossa evolução acontece treino após treino. Mantemos encontros semanais fixos às quartas-feiras (20h30 às 22h30) na Arca d’Água, além de sessões extras focadas em fundamentos, tática coletiva e jogos amistosos com equipas parceiras.',
+        highlights: [
+            'Treinos e jogos regulares às quartas-feiras com foco técnico e tático',
+            'Evolução contínua de passe, levantamento, ataque, bloqueio e rotação',
+            'Amistosos e treinos conjuntos com grupos e equipas parceiras do Porto'
+        ],
+        media_items: [],
+        cta_label: 'Ver Dias no Calendário',
+        cta_url: '#calendar',
+        show_games_list: false
+    },
+    {
+        slug: 'bons_jogos',
+        display_order: 4,
+        icon: 'fa-solid fa-volleyball',
+        title: 'Bons Jogos',
+        summary: 'Takes reais dos nossos jogos indoor e o projeto do Time Intermediário da Fúria.',
+        badge: 'Time Intermediário & Takes',
+        content: 'Jogamos com garra do primeiro ao último ponto para proporcionar partidas disputadas e divertidas. Aqui reunimos alguns takes em vídeo das nossas noites de quadra e os bastidores do Time Intermediário que estamos a formar para novos desafios.',
+        highlights: [
+            'Takes e melhores momentos captados diretamente nas nossas quadras',
+            'Estruturação do Time Intermediário da Fúria para jogos e torneios mais competitivos',
+            'Ritmo intenso, entregas em defesa e vibração a cada rali vencido'
+        ],
+        media_items: [
+            {
+                type: 'video',
+                url: 'public/video/indoor.mp4',
+                caption: 'Take indoor dos nossos jogos — intensidade Fúria em quadra'
+            }
+        ],
+        cta_label: 'Quero Jogar com a Fúria',
+        cta_url: '#join',
+        show_games_list: false
+    }
+];
 
 const SECURITY_KEYS = {
     LOGIN_ATTEMPTS: 'furia_sec_auth_attempts_v2',
@@ -159,6 +249,103 @@ const CrossPageSessionBridge = {
         }
     }
 };
+
+function sanitizeCtaUrl(url) {
+    const clean = String(url || '').trim();
+    if (!clean) return '';
+    if (/^#[a-zA-Z0-9_-]+$/.test(clean) || /^https?:\/\//i.test(clean)) {
+        return clean;
+    }
+    throw new Error('O link de ação deve começar com https://, http:// ou #secao.');
+}
+
+function sanitizeMediaUrl(url) {
+    const clean = String(url || '').trim();
+    if (!clean) return '';
+    if (/^https?:\/\//i.test(clean) || /^public\/[a-zA-Z0-9_.\-\/]+$/.test(clean)) {
+        return clean;
+    }
+    if (/^data:image\/(png|jpe?g|webp|gif);base64,/i.test(clean)) {
+        return clean;
+    }
+    throw new Error('URL de mídia inválida. Utilize links https://, caminhos em public/ ou upload de imagem PNG/JPG/WEBP.');
+}
+
+function normalizeSpiritCard(raw, fallback) {
+    const base = fallback || {};
+    const rawHighlights = Array.isArray(raw && raw.highlights)
+        ? raw.highlights
+        : (typeof (raw && raw.highlights) === 'string'
+            ? raw.highlights.split(/\r?\n/).map(s => s.trim()).filter(Boolean)
+            : (base.highlights || []));
+
+    const rawMedia = Array.isArray(raw && raw.media_items) ? raw.media_items : (base.media_items || []);
+    const mediaItems = rawMedia
+        .map(item => {
+            if (!item || !item.url) return null;
+            try {
+                const safeUrl = sanitizeMediaUrl(item.url);
+                const inferredVideo = item.type === 'video' || /\.(mp4|webm|ogg)(\?|$)/i.test(safeUrl);
+                return {
+                    type: inferredVideo ? 'video' : 'image',
+                    url: safeUrl,
+                    caption: String(item.caption || '').trim().slice(0, 160)
+                };
+            } catch {
+                return null;
+            }
+        })
+        .filter(Boolean);
+
+    return {
+        slug: (raw && raw.slug) || base.slug,
+        display_order: Number((raw && raw.display_order) || base.display_order || 1),
+        icon: String((raw && raw.icon) || base.icon || 'fa-solid fa-bolt').trim(),
+        title: String((raw && raw.title) || base.title || '').trim(),
+        summary: String((raw && raw.summary) || base.summary || '').trim(),
+        badge: String((raw && raw.badge !== undefined ? raw.badge : base.badge) || '').trim(),
+        content: String((raw && raw.content) || base.content || '').trim(),
+        highlights: rawHighlights.map(h => String(h).trim()).filter(Boolean).slice(0, 10),
+        media_items: mediaItems.slice(0, 12),
+        cta_label: String((raw && raw.cta_label !== undefined ? raw.cta_label : base.cta_label) || '').trim(),
+        cta_url: String((raw && raw.cta_url !== undefined ? raw.cta_url : base.cta_url) || '').trim(),
+        show_games_list: typeof (raw && raw.show_games_list) === 'boolean'
+            ? raw.show_games_list
+            : Boolean(base.show_games_list),
+        updated_at: (raw && raw.updated_at) || null
+    };
+}
+
+function readSpiritLocalCache() {
+    try {
+        const raw = localStorage.getItem(SPIRIT_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+    } catch {
+        return {};
+    }
+}
+
+function writeSpiritLocalCache(cardsArray) {
+    try {
+        const map = {};
+        (cardsArray || []).forEach(c => {
+            if (c && c.slug) map[c.slug] = c;
+        });
+        localStorage.setItem(SPIRIT_STORAGE_KEY, JSON.stringify(map));
+    } catch {
+        // Ignore storage quota errors
+    }
+}
+
+function cloneDefaultSpiritCards() {
+    return DEFAULT_SPIRIT_CARDS.map(card => normalizeSpiritCard(card, card));
+}
+
+function isMissingSpiritTableError(err) {
+    if (!err) return false;
+    const msg = String(err.message || err.details || err.hint || '').toLowerCase();
+    return err.code === 'PGRST205' || err.code === '42P01' || msg.includes('spirit_cards');
+}
 
 /**
  * Validação opcional de URLs seguras (http:// ou https://)
@@ -392,7 +579,9 @@ const FuriaDataService = {
         if (error) {
             throw new Error('Erro ao carregar o calendário: ' + error.message);
         }
-        return (data || []).map(mapDbRowToGame);
+        return (data || [])
+            .filter(row => row && row.location_name !== SPIRIT_CARD_SENTINEL)
+            .map(mapDbRowToGame);
     },
 
     normalizeGamePayload(payload) {
@@ -547,6 +736,205 @@ const FuriaDataService = {
 
         if (error) throw new Error('Erro ao excluir jogo: ' + error.message);
         return true;
+    },
+
+    // --- CRUD DOS CARDS EXPANSÍVEIS ("ESSE É O NOSSO ESPÍRITO!") ---
+    getDefaultSpiritCards() {
+        return cloneDefaultSpiritCards();
+    },
+
+    async fetchSpiritCards() {
+        const defaults = cloneDefaultSpiritCards();
+        const remoteMap = {};
+        let fetchedFromCloud = false;
+
+        if (supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('spirit_cards')
+                    .select('*')
+                    .order('display_order', { ascending: true });
+
+                if (!error && Array.isArray(data)) {
+                    fetchedFromCloud = true;
+                    data.forEach(row => {
+                        if (row && row.slug) remoteMap[row.slug] = row;
+                    });
+                } else if (isMissingSpiritTableError(error)) {
+                    // Fallback transparente em public.games caso public.spirit_cards ainda não exista
+                    const { data: sentinelRows, error: sentinelErr } = await supabaseClient
+                        .from('games')
+                        .select('id, recurrence_label, opponent, updated_at')
+                        .eq('location_name', SPIRIT_CARD_SENTINEL);
+
+                    if (!sentinelErr && Array.isArray(sentinelRows)) {
+                        fetchedFromCloud = true;
+                        sentinelRows.forEach(row => {
+                            if (row && row.recurrence_label && row.opponent) {
+                                try {
+                                    const parsed = JSON.parse(row.opponent);
+                                    remoteMap[row.recurrence_label] = {
+                                        ...parsed,
+                                        slug: row.recurrence_label,
+                                        updated_at: row.updated_at || parsed.updated_at
+                                    };
+                                } catch {
+                                    // Ignora JSON inválido
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch {
+                // Usa cache local se offline
+            }
+        }
+
+        const localMap = readSpiritLocalCache();
+        const merged = defaults.map(defCard => {
+            const source = remoteMap[defCard.slug] || (!fetchedFromCloud ? localMap[defCard.slug] : null) || localMap[defCard.slug];
+            return source ? normalizeSpiritCard(source, defCard) : defCard;
+        });
+
+        if (fetchedFromCloud) {
+            const remoteOverrides = defaults.map(defCard =>
+                remoteMap[defCard.slug] ? normalizeSpiritCard(remoteMap[defCard.slug], defCard) : defCard
+            );
+            writeSpiritLocalCache(remoteOverrides);
+            return remoteOverrides;
+        }
+
+        return merged;
+    },
+
+    async saveSpiritCard(cardPayload) {
+        const defaultsMap = {};
+        cloneDefaultSpiritCards().forEach(c => { defaultsMap[c.slug] = c; });
+
+        const slug = String((cardPayload && cardPayload.slug) || '').trim();
+        const baseCard = defaultsMap[slug];
+        if (!baseCard) {
+            throw new Error('Identificador de card inválido.');
+        }
+
+        const title = String((cardPayload && cardPayload.title) || '').trim();
+        const summary = String((cardPayload && cardPayload.summary) || '').trim();
+        const content = String((cardPayload && cardPayload.content) || '').trim();
+        if (title.length < 2) throw new Error('O título do card deve ter pelo menos 2 caracteres.');
+        if (summary.length < 4) throw new Error('O resumo do card deve ter pelo menos 4 caracteres.');
+        if (content.length < 4) throw new Error('O conteúdo expandido deve ter pelo menos 4 caracteres.');
+
+        const safeCtaUrl = sanitizeCtaUrl(cardPayload.cta_url);
+        const rawMedia = Array.isArray(cardPayload.media_items) ? cardPayload.media_items : [];
+        const validatedMedia = rawMedia.map(item => ({
+            type: item && item.type === 'video' ? 'video' : 'image',
+            url: sanitizeMediaUrl(item && item.url),
+            caption: String((item && item.caption) || '').trim().slice(0, 160)
+        }));
+
+        const normalized = normalizeSpiritCard({
+            ...cardPayload,
+            slug,
+            cta_url: safeCtaUrl,
+            media_items: validatedMedia,
+            updated_at: new Date().toISOString()
+        }, baseCard);
+
+        if (supabaseClient) {
+            await CrossPageSessionBridge.synchronizeIfNeeded();
+
+            const dbRow = {
+                slug: normalized.slug,
+                display_order: normalized.display_order,
+                icon: normalized.icon,
+                title: normalized.title,
+                summary: normalized.summary,
+                badge: normalized.badge || null,
+                content: normalized.content,
+                highlights: normalized.highlights,
+                media_items: normalized.media_items,
+                cta_label: normalized.cta_label || null,
+                cta_url: normalized.cta_url || null,
+                show_games_list: normalized.show_games_list,
+                updated_at: new Date().toISOString()
+            };
+
+            const { data, error } = await supabaseClient
+                .from('spirit_cards')
+                .upsert(dbRow, { onConflict: 'slug' })
+                .select()
+                .single();
+
+            if (!error && data) {
+                const saved = normalizeSpiritCard(data, baseCard);
+                const cacheMap = readSpiritLocalCache();
+                cacheMap[saved.slug] = saved;
+                writeSpiritLocalCache(Object.values(cacheMap));
+                return saved;
+            }
+
+            if (isMissingSpiritTableError(error)) {
+                // Fallback seguro na tabela public.games usando linha sentinela com RLS admin
+                const { data: existingRows, error: findErr } = await supabaseClient
+                    .from('games')
+                    .select('id')
+                    .eq('location_name', SPIRIT_CARD_SENTINEL)
+                    .eq('recurrence_label', slug);
+
+                if (findErr) {
+                    throw new Error('Erro ao consultar armazenamento dos cards: ' + findErr.message);
+                }
+
+                const sentinelPayload = {
+                    series_id: null,
+                    title: normalized.title.slice(0, 160),
+                    category: 'Evento Especial',
+                    team_level: 'Todos os Níveis',
+                    gender_category: 'Misto',
+                    game_level: 'Intermediário',
+                    status: 'Confirmado',
+                    score_result: NO_STATUS_SENTINEL,
+                    recurrence_type: 'unico',
+                    recurrence_label: slug,
+                    game_date: '1970-01-01',
+                    start_time: '00:00',
+                    end_time: null,
+                    all_day: true,
+                    location_name: SPIRIT_CARD_SENTINEL,
+                    maps_url: SPIRIT_CARD_MAPS_SENTINEL,
+                    registration_url: null,
+                    opponent: JSON.stringify(normalized),
+                    notes: 'Conteúdo administrativo do card expansível: ' + slug
+                };
+
+                if (existingRows && existingRows.length > 0) {
+                    const { error: updErr } = await supabaseClient
+                        .from('games')
+                        .update(sentinelPayload)
+                        .eq('id', existingRows[0].id);
+
+                    if (updErr) {
+                        throw new Error('Erro ao atualizar card no Supabase: ' + updErr.message);
+                    }
+                } else {
+                    const { error: insErr } = await supabaseClient
+                        .from('games')
+                        .insert([sentinelPayload]);
+
+                    if (insErr) {
+                        throw new Error('Erro ao salvar card no Supabase: ' + insErr.message);
+                    }
+                }
+            } else if (error) {
+                throw new Error('Erro ao salvar card no Supabase: ' + error.message);
+            }
+        }
+
+        const currentCache = readSpiritLocalCache();
+        currentCache[normalized.slug] = normalized;
+        const fullList = cloneDefaultSpiritCards().map(def => currentCache[def.slug] ? normalizeSpiritCard(currentCache[def.slug], def) : def);
+        writeSpiritLocalCache(fullList);
+        return normalized;
     }
 };
 

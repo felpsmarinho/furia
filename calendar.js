@@ -21,6 +21,9 @@
 
     let allGames = [];
     let currentSession = null;
+    let spiritCards = [];
+    let expandedSpiritSlug = null;
+    let editingSpiritMedia = [];
     let viewDate = new Date();
     let calendarViewMode = 'month'; // 'month' | 'week' | 'day'
     let selectedDateStr = null;     // YYYY-MM-DD ou null
@@ -89,6 +92,33 @@
     const deleteEntireSeriesCheckbox = document.getElementById('delete-entire-series-checkbox');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
     const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+
+    // Elementos - Cards Expansíveis ("Esse é o nosso Espírito!")
+    const spiritCardsGridEl = document.getElementById('spirit-cards-grid');
+    const adminSpiritToolbarEl = document.getElementById('admin-spirit-toolbar');
+    const adminSpiritEmailEl = document.getElementById('admin-spirit-email');
+    const adminSpiritLogoutBtn = document.getElementById('admin-spirit-logout-btn');
+
+    // Modal Admin - Edição dos Cards do Espírito
+    const spiritModalOverlay = document.getElementById('spirit-modal-overlay');
+    const spiritModalTitle = document.getElementById('spirit-modal-title');
+    const spiritForm = document.getElementById('spirit-form');
+    const spiritFormFeedback = document.getElementById('spirit-form-feedback');
+    const closeSpiritModalBtn = document.getElementById('close-spirit-modal-btn');
+    const cancelSpiritModalBtn = document.getElementById('cancel-spirit-modal-btn');
+    const spiritRestoreDefaultBtn = document.getElementById('spirit-restore-default-btn');
+    const spiritMediaListEl = document.getElementById('spirit-media-items-list');
+    const spiritMediaTypeSelect = document.getElementById('spirit-media-type-select');
+    const spiritMediaUrlInput = document.getElementById('spirit-media-url-input');
+    const spiritMediaCaptionInput = document.getElementById('spirit-media-caption-input');
+    const spiritAddMediaBtn = document.getElementById('spirit-add-media-btn');
+    const spiritMediaFileInput = document.getElementById('spirit-media-file-input');
+
+    // Lightbox de Fotos dos Cards
+    const spiritLightboxOverlay = document.getElementById('spirit-lightbox-overlay');
+    const spiritLightboxImg = document.getElementById('spirit-lightbox-img');
+    const spiritLightboxCaption = document.getElementById('spirit-lightbox-caption');
+    const closeSpiritLightboxBtn = document.getElementById('close-spirit-lightbox-btn');
 
     // --- UTILITÁRIOS DE DATA ---
     function toDateString(dateObj) {
@@ -181,13 +211,21 @@
     async function initCalendar() {
         if (!calDaysGridEl || !window.FuriaDataService) return;
 
+        spiritCards = window.FuriaDataService.getDefaultSpiritCards
+            ? window.FuriaDataService.getDefaultSpiritCards()
+            : [];
+        renderSpiritCards();
+
         await checkAdminState();
         window.FuriaDataService.startInactivityGuard(async () => {
             await checkAdminState();
             renderAll();
         });
 
-        await loadAndRenderGames();
+        await Promise.all([
+            loadAndRenderGames(),
+            loadSpiritCards()
+        ]);
         bindEvents();
     }
 
@@ -197,6 +235,10 @@
 
         if (adminToolbarEl) {
             adminToolbarEl.style.display = isLogged ? 'flex' : 'none';
+        }
+
+        if (adminSpiritToolbarEl) {
+            adminSpiritToolbarEl.style.display = isLogged ? 'flex' : 'none';
         }
 
         if (calendarWidgetCardEl) {
@@ -210,6 +252,9 @@
         if (isLogged) {
             if (adminUserEmailEl) {
                 adminUserEmailEl.textContent = currentSession.user.email;
+            }
+            if (adminSpiritEmailEl) {
+                adminSpiritEmailEl.textContent = currentSession.user.email;
             }
             if (navAdminLink) {
                 navAdminLink.innerHTML = '<i class="fa-solid fa-user-shield"></i> Admin Ativo';
@@ -227,6 +272,16 @@
                 navAdminLink.classList.remove('admin-logged');
             }
         }
+    }
+
+    async function loadSpiritCards() {
+        if (!window.FuriaDataService || !window.FuriaDataService.fetchSpiritCards) return;
+        try {
+            spiritCards = await window.FuriaDataService.fetchSpiritCards();
+        } catch (err) {
+            console.error(err);
+        }
+        renderSpiritCards();
     }
 
     async function loadAndRenderGames() {
@@ -249,6 +304,431 @@
             renderDayView();
         }
         renderGamesList();
+        renderSpiritCards();
+    }
+
+    // --- CARDS EXPANSÍVEIS ("ESSE É O NOSSO ESPÍRITO!") ---
+    function getSafeSpiritIcon(iconClass) {
+        const clean = String(iconClass || '').trim();
+        return /^fa-(solid|regular|brands)\s+fa-[a-z0-9-]+$/i.test(clean)
+            ? clean
+            : 'fa-solid fa-bolt';
+    }
+
+    function getSafeSpiritHref(url) {
+        const clean = String(url || '').trim();
+        if (/^#[a-zA-Z0-9_-]+$/.test(clean) || /^https?:\/\//i.test(clean)) {
+            return clean;
+        }
+        return '';
+    }
+
+    function getSafeSpiritMediaSrc(url) {
+        const clean = String(url || '').trim();
+        if (/^https?:\/\//i.test(clean) || /^public\/[a-zA-Z0-9_.\-\/]+$/.test(clean)) {
+            return clean;
+        }
+        if (/^data:image\/(png|jpe?g|webp|gif);base64,/i.test(clean)) {
+            return clean;
+        }
+        return '';
+    }
+
+    function isVideoFileUrl(url) {
+        return /\.(mp4|webm|ogg)(\?|$)/i.test(String(url || '').trim());
+    }
+
+    function pauseSpiritVideos() {
+        if (!spiritCardsGridEl) return;
+        spiritCardsGridEl.querySelectorAll('video').forEach(v => {
+            try { v.pause(); } catch { /* ignore */ }
+        });
+    }
+
+    function openSpiritLightbox(imgUrl, caption) {
+        if (!spiritLightboxOverlay || !spiritLightboxImg) return;
+        const safeSrc = getSafeSpiritMediaSrc(imgUrl);
+        if (!safeSrc) return;
+        spiritLightboxImg.src = safeSrc;
+        if (spiritLightboxCaption) {
+            spiritLightboxCaption.textContent = caption || '';
+            spiritLightboxCaption.style.display = caption ? 'block' : 'none';
+        }
+        spiritLightboxOverlay.classList.add('active');
+    }
+
+    function closeSpiritLightbox() {
+        if (!spiritLightboxOverlay) return;
+        spiritLightboxOverlay.classList.remove('active');
+        if (spiritLightboxImg) spiritLightboxImg.removeAttribute('src');
+    }
+
+    function buildSpiritGamesPreviewHtml() {
+        const todayStr = toDateString(new Date());
+        const upcoming = (allGames || [])
+            .filter(g => g.game_date >= todayStr)
+            .sort((a, b) => (a.game_date + (a.start_time || '')).localeCompare(b.game_date + (b.start_time || '')))
+            .slice(0, 4);
+
+        const gamesToShow = upcoming.length > 0
+            ? upcoming
+            : (allGames || []).slice(-4).reverse();
+
+        if (!gamesToShow.length) {
+            return `
+                <div class="spirit-games-box">
+                    <div class="spirit-subblock-header">
+                        <h4><i class="fa-solid fa-calendar-days text-accent"></i> Próximos Jogos na Lista</h4>
+                        <a href="#calendar" class="spirit-inline-link">Ver calendário completo</a>
+                    </div>
+                    <p class="spirit-empty-note">Os próximos jogos agendados aparecerão aqui automaticamente assim que forem publicados no calendário.</p>
+                </div>
+            `;
+        }
+
+        const itemsHtml = gamesToShow.map(g => {
+            const parts = parseDateParts(g.game_date);
+            const timeLabel = g.all_day ? 'Dia Inteiro' : formatTimeShort(g.start_time);
+            const regUrl = getSafeSpiritHref(g.registration_url);
+            const actionBtn = regUrl
+                ? `<a href="${escapeHtml(regUrl)}" target="_blank" rel="noopener noreferrer" class="spirit-mini-game-cta"><i class="fa-solid fa-bolt"></i> Vagas no VolleyDash</a>`
+                : `<a href="#calendar" class="spirit-mini-game-cta"><i class="fa-solid fa-calendar-day"></i> Ver Agenda</a>`;
+
+            return `
+                <div class="spirit-mini-game-item">
+                    <div class="spirit-mini-game-date">
+                        <span>${parts.day}/${parts.monthShort}</span>
+                        <small>${parts.weekdayShort}</small>
+                    </div>
+                    <div class="spirit-mini-game-info">
+                        <strong>${escapeHtml(g.title)}</strong>
+                        <span><i class="fa-regular fa-clock"></i> ${escapeHtml(timeLabel)} • <i class="fa-solid fa-location-dot"></i> ${escapeHtml(g.location_name)}</span>
+                    </div>
+                    ${actionBtn}
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="spirit-games-box">
+                <div class="spirit-subblock-header">
+                    <h4><i class="fa-solid fa-calendar-days text-accent"></i> Próximos Jogos da Fúria</h4>
+                    <a href="#calendar" class="spirit-inline-link">Ver todos no Calendário <i class="fa-solid fa-arrow-down"></i></a>
+                </div>
+                <div class="spirit-mini-games-list">
+                    ${itemsHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    function buildSpiritMediaHtml(mediaItems) {
+        const validItems = (mediaItems || [])
+            .map(m => ({ ...m, safeUrl: getSafeSpiritMediaSrc(m && m.url) }))
+            .filter(m => m.safeUrl);
+
+        if (!validItems.length) return '';
+
+        const cardsHtml = validItems.map(item => {
+            const captionHtml = item.caption
+                ? `<span class="spirit-media-caption">${escapeHtml(item.caption)}</span>`
+                : '';
+
+            if (item.type === 'video') {
+                if (isVideoFileUrl(item.safeUrl)) {
+                    return `
+                        <div class="spirit-media-item spirit-media-video">
+                            <video controls preload="metadata" playsinline src="${escapeHtml(item.safeUrl)}"></video>
+                            ${captionHtml}
+                        </div>
+                    `;
+                }
+                return `
+                    <a href="${escapeHtml(item.safeUrl)}" target="_blank" rel="noopener noreferrer" class="spirit-media-item spirit-media-external-video">
+                        <div class="spirit-external-play-badge"><i class="fa-solid fa-circle-play"></i></div>
+                        <div class="spirit-external-video-meta">
+                            <strong>Take / Vídeo do Jogo</strong>
+                            <span>${escapeHtml(item.caption || 'Assistir em nova janela')}</span>
+                        </div>
+                    </a>
+                `;
+            }
+
+            return `
+                <button type="button" class="spirit-media-item spirit-media-image-btn" data-lightbox-src="${escapeHtml(item.safeUrl)}" data-lightbox-caption="${escapeHtml(item.caption || '')}">
+                    <img src="${escapeHtml(item.safeUrl)}" alt="${escapeHtml(item.caption || 'Registo Fúria Voleibol')}" loading="lazy">
+                    ${captionHtml}
+                </button>
+            `;
+        }).join('');
+
+        return `
+            <div class="spirit-media-gallery">
+                ${cardsHtml}
+            </div>
+        `;
+    }
+
+    function renderSpiritCards() {
+        if (!spiritCardsGridEl) return;
+
+        const isAdmin = isAdminLogged();
+        const list = (spiritCards && spiritCards.length)
+            ? spiritCards
+            : (window.FuriaDataService && window.FuriaDataService.getDefaultSpiritCards
+                ? window.FuriaDataService.getDefaultSpiritCards()
+                : []);
+
+        spiritCardsGridEl.innerHTML = list.map((card, idx) => {
+            const isExpanded = expandedSpiritSlug === card.slug;
+            const iconClass = getSafeSpiritIcon(card.icon);
+            const delaySec = (0.1 + idx * 0.08).toFixed(2);
+            const highlightsHtml = (card.highlights && card.highlights.length)
+                ? `<ul class="spirit-highlights-list">
+                       ${card.highlights.map(item => `<li><i class="fa-solid fa-bolt text-accent"></i> <span>${escapeHtml(item)}</span></li>`).join('')}
+                   </ul>`
+                : '';
+
+            const safeCtaUrl = getSafeSpiritHref(card.cta_url);
+            const ctaIsExternal = /^https?:\/\//i.test(safeCtaUrl);
+            const ctaHtml = (card.cta_label && safeCtaUrl)
+                ? `<a href="${escapeHtml(safeCtaUrl)}" ${ctaIsExternal ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn primary-btn btn-sm spirit-cta-btn">
+                       ${escapeHtml(card.cta_label)} <i class="fa-solid ${ctaIsExternal ? 'fa-arrow-up-right-from-square' : 'fa-arrow-down'}"></i>
+                   </a>`
+                : '';
+
+            const gamesPreviewHtml = card.show_games_list ? buildSpiritGamesPreviewHtml() : '';
+            const mediaGalleryHtml = buildSpiritMediaHtml(card.media_items);
+            const hasRightColumn = Boolean(gamesPreviewHtml || mediaGalleryHtml);
+
+            const editBtnHtml = isAdmin
+                ? `<button type="button" class="admin-action-btn spirit-edit-btn" data-spirit-edit="${escapeHtml(card.slug)}" title="Editar conteúdo deste card">
+                       <i class="fa-solid fa-pen-to-square"></i> Editar Card
+                   </button>`
+                : '';
+
+            return `
+                <article class="card spirit-card${isExpanded ? ' expanded' : ''}" data-spirit-slug="${escapeHtml(card.slug)}" style="--delay: ${delaySec}s" aria-expanded="${isExpanded ? 'true' : 'false'}">
+                    <div class="spirit-card-top" role="button" tabindex="0" aria-controls="spirit-panel-${escapeHtml(card.slug)}" aria-expanded="${isExpanded ? 'true' : 'false'}">
+                        <div class="spirit-card-header-meta">
+                            <span class="spirit-order-chip">0${idx + 1}</span>
+                            ${editBtnHtml}
+                        </div>
+                        <i class="${escapeHtml(iconClass)} icon"></i>
+                        <h3>${escapeHtml(card.title)}</h3>
+                        <p>${escapeHtml(card.summary)}</p>
+                        <span class="spirit-toggle-hint">
+                            <i class="fa-solid ${isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}"></i>
+                            ${isExpanded ? 'Recolher detalhes' : 'Explorar pilar'}
+                        </span>
+                    </div>
+
+                    ${isExpanded ? `
+                        <div id="spirit-panel-${escapeHtml(card.slug)}" class="spirit-expanded-body">
+                            <div class="spirit-expanded-grid${hasRightColumn ? '' : ' single-col'}">
+                                <div class="spirit-expanded-main">
+                                    ${card.badge ? `<span class="spirit-expanded-badge"><i class="${escapeHtml(iconClass)}"></i> ${escapeHtml(card.badge)}</span>` : ''}
+                                    <p class="spirit-expanded-text">${escapeHtml(card.content)}</p>
+                                    ${highlightsHtml}
+                                    <div class="spirit-expanded-actions">
+                                        ${ctaHtml}
+                                        <button type="button" class="btn secondary-btn btn-sm spirit-collapse-btn" data-spirit-collapse="${escapeHtml(card.slug)}">
+                                            <i class="fa-solid fa-chevron-up"></i> Fechar
+                                        </button>
+                                    </div>
+                                </div>
+                                ${hasRightColumn ? `
+                                    <div class="spirit-expanded-extras">
+                                        ${gamesPreviewHtml}
+                                        ${mediaGalleryHtml}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                </article>
+            `;
+        }).join('');
+
+        // Eventos dos cabeçalhos clicáveis (expandir/recolher) e botões admin
+        spiritCardsGridEl.querySelectorAll('.spirit-card-top').forEach(topEl => {
+            const toggleCard = () => {
+                const parentCard = topEl.closest('.spirit-card');
+                const slug = parentCard ? parentCard.getAttribute('data-spirit-slug') : null;
+                if (!slug) return;
+                pauseSpiritVideos();
+                expandedSpiritSlug = expandedSpiritSlug === slug ? null : slug;
+                renderSpiritCards();
+                if (expandedSpiritSlug === slug) {
+                    const updatedEl = spiritCardsGridEl.querySelector(`.spirit-card[data-spirit-slug="${slug}"]`);
+                    if (updatedEl && window.innerWidth <= 900) {
+                        updatedEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }
+            };
+
+            topEl.addEventListener('click', (e) => {
+                if (e.target.closest('.spirit-edit-btn')) return;
+                toggleCard();
+            });
+
+            topEl.addEventListener('keydown', (e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.spirit-edit-btn')) {
+                    e.preventDefault();
+                    toggleCard();
+                }
+            });
+        });
+
+        spiritCardsGridEl.querySelectorAll('.spirit-collapse-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                pauseSpiritVideos();
+                expandedSpiritSlug = null;
+                renderSpiritCards();
+            });
+        });
+
+        spiritCardsGridEl.querySelectorAll('.spirit-media-image-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openSpiritLightbox(
+                    btn.getAttribute('data-lightbox-src'),
+                    btn.getAttribute('data-lightbox-caption')
+                );
+            });
+        });
+
+        if (isAdmin) {
+            spiritCardsGridEl.querySelectorAll('.spirit-edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const slug = btn.getAttribute('data-spirit-edit');
+                    openSpiritEditModal(slug);
+                });
+            });
+        }
+    }
+
+    function renderSpiritModalMediaList() {
+        if (!spiritMediaListEl) return;
+        if (!editingSpiritMedia.length) {
+            spiritMediaListEl.innerHTML = '<p class="spirit-media-empty">Nenhuma foto ou vídeo adicionado ainda neste card.</p>';
+            return;
+        }
+
+        spiritMediaListEl.innerHTML = editingSpiritMedia.map((item, index) => {
+            const safeSrc = getSafeSpiritMediaSrc(item.url);
+            const previewBadge = item.type === 'video'
+                ? '<span class="spirit-media-kind-badge video"><i class="fa-solid fa-film"></i> Vídeo</span>'
+                : (safeSrc
+                    ? `<img src="${escapeHtml(safeSrc)}" alt="Pré-visualização" class="spirit-media-thumb">`
+                    : '<span class="spirit-media-kind-badge image"><i class="fa-solid fa-image"></i> Foto</span>');
+
+            const labelText = item.caption || (item.url.startsWith('data:') ? 'Imagem carregada do dispositivo' : item.url);
+
+            return `
+                <div class="spirit-media-admin-row">
+                    <div class="spirit-media-admin-info">
+                        ${previewBadge}
+                        <div class="spirit-media-admin-text">
+                            <strong>${item.type === 'video' ? 'Vídeo / Take' : 'Foto'}</strong>
+                            <span>${escapeHtml(labelText)}</span>
+                        </div>
+                    </div>
+                    <button type="button" class="admin-action-btn delete-game-btn spirit-remove-media-btn" data-media-index="${index}" title="Remover mídia">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        spiritMediaListEl.querySelectorAll('.spirit-remove-media-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = Number(btn.getAttribute('data-media-index'));
+                if (!Number.isNaN(idx)) {
+                    editingSpiritMedia.splice(idx, 1);
+                    renderSpiritModalMediaList();
+                }
+            });
+        });
+    }
+
+    function compressImageFile(file) {
+        return new Promise((resolve, reject) => {
+            if (!file || !file.type || !file.type.startsWith('image/')) {
+                reject(new Error('Selecione um ficheiro de imagem válido (PNG, JPG ou WEBP).'));
+                return;
+            }
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error('Não foi possível ler o ficheiro selecionado.'));
+            reader.onload = () => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('Formato de imagem não suportado pelo navegador.'));
+                img.onload = () => {
+                    const maxDim = 960;
+                    let w = img.naturalWidth || img.width;
+                    let h = img.naturalHeight || img.height;
+                    if (w > maxDim || h > maxDim) {
+                        const scale = Math.min(maxDim / w, maxDim / h);
+                        w = Math.round(w * scale);
+                        h = Math.round(h * scale);
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+                    resolve(dataUrl);
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function populateSpiritModalFields(cardData) {
+        document.getElementById('spirit-slug-input').value = cardData.slug || '';
+        document.getElementById('spirit-title-input').value = cardData.title || '';
+        document.getElementById('spirit-icon-select').value = getSafeSpiritIcon(cardData.icon);
+        document.getElementById('spirit-summary-input').value = cardData.summary || '';
+        document.getElementById('spirit-badge-input').value = cardData.badge || '';
+        document.getElementById('spirit-content-input').value = cardData.content || '';
+        document.getElementById('spirit-highlights-input').value = Array.isArray(cardData.highlights)
+            ? cardData.highlights.join('\n')
+            : '';
+        document.getElementById('spirit-show-games-checkbox').checked = Boolean(cardData.show_games_list);
+        document.getElementById('spirit-cta-label-input').value = cardData.cta_label || '';
+        document.getElementById('spirit-cta-url-input').value = cardData.cta_url || '';
+
+        editingSpiritMedia = Array.isArray(cardData.media_items)
+            ? cardData.media_items.map(m => ({ ...m }))
+            : [];
+        renderSpiritModalMediaList();
+    }
+
+    function openSpiritEditModal(slug) {
+        if (!isAdminLogged() || !spiritModalOverlay) return;
+        const found = spiritCards.find(c => c.slug === slug);
+        if (!found) return;
+
+        if (spiritFormFeedback) {
+            spiritFormFeedback.style.display = 'none';
+            spiritFormFeedback.textContent = '';
+        }
+        if (spiritMediaUrlInput) spiritMediaUrlInput.value = '';
+        if (spiritMediaCaptionInput) spiritMediaCaptionInput.value = '';
+        if (spiritModalTitle) {
+            spiritModalTitle.innerHTML = `<i class="fa-solid fa-pen-to-square text-accent"></i> Editar: ${escapeHtml(found.title)}`;
+        }
+
+        populateSpiritModalFields(found);
+        spiritModalOverlay.classList.add('active');
+    }
+
+    function closeSpiritEditModal() {
+        if (spiritModalOverlay) spiritModalOverlay.classList.remove('active');
     }
 
     function updateViewContainersVisibility() {
@@ -1229,6 +1709,163 @@
                 await window.FuriaDataService.signOut();
                 await checkAdminState();
                 renderAll();
+            });
+        }
+
+        if (adminSpiritLogoutBtn) {
+            adminSpiritLogoutBtn.addEventListener('click', async () => {
+                await window.FuriaDataService.signOut();
+                await checkAdminState();
+                renderAll();
+            });
+        }
+
+        if (closeSpiritModalBtn) closeSpiritModalBtn.addEventListener('click', closeSpiritEditModal);
+        if (cancelSpiritModalBtn) cancelSpiritModalBtn.addEventListener('click', closeSpiritEditModal);
+        if (spiritModalOverlay) {
+            spiritModalOverlay.addEventListener('click', (e) => {
+                if (e.target === spiritModalOverlay) closeSpiritEditModal();
+            });
+        }
+
+        if (closeSpiritLightboxBtn) closeSpiritLightboxBtn.addEventListener('click', closeSpiritLightbox);
+        if (spiritLightboxOverlay) {
+            spiritLightboxOverlay.addEventListener('click', (e) => {
+                if (e.target === spiritLightboxOverlay) closeSpiritLightbox();
+            });
+        }
+
+        if (spiritAddMediaBtn) {
+            spiritAddMediaBtn.addEventListener('click', () => {
+                if (spiritFormFeedback) {
+                    spiritFormFeedback.style.display = 'none';
+                    spiritFormFeedback.textContent = '';
+                }
+                const rawUrl = spiritMediaUrlInput ? spiritMediaUrlInput.value.trim() : '';
+                const safeSrc = getSafeSpiritMediaSrc(rawUrl);
+                if (!safeSrc) {
+                    if (spiritFormFeedback) {
+                        spiritFormFeedback.style.display = 'block';
+                        spiritFormFeedback.textContent = 'Informe uma URL válida (https://..., public/img/... ou public/video/...) antes de adicionar.';
+                    }
+                    return;
+                }
+                const typeVal = spiritMediaTypeSelect ? spiritMediaTypeSelect.value : 'image';
+                const captionVal = spiritMediaCaptionInput ? spiritMediaCaptionInput.value.trim() : '';
+                editingSpiritMedia.push({
+                    type: typeVal === 'video' ? 'video' : 'image',
+                    url: safeSrc,
+                    caption: captionVal
+                });
+                if (spiritMediaUrlInput) spiritMediaUrlInput.value = '';
+                if (spiritMediaCaptionInput) spiritMediaCaptionInput.value = '';
+                renderSpiritModalMediaList();
+            });
+        }
+
+        if (spiritMediaFileInput) {
+            spiritMediaFileInput.addEventListener('change', async (e) => {
+                const file = e.target && e.target.files && e.target.files[0];
+                if (!file) return;
+                try {
+                    const dataUrl = await compressImageFile(file);
+                    const captionVal = spiritMediaCaptionInput && spiritMediaCaptionInput.value.trim()
+                        ? spiritMediaCaptionInput.value.trim()
+                        : file.name.replace(/\.[^.]+$/, '');
+                    editingSpiritMedia.push({
+                        type: 'image',
+                        url: dataUrl,
+                        caption: captionVal.slice(0, 160)
+                    });
+                    if (spiritMediaCaptionInput) spiritMediaCaptionInput.value = '';
+                    renderSpiritModalMediaList();
+                } catch (err) {
+                    if (spiritFormFeedback) {
+                        spiritFormFeedback.style.display = 'block';
+                        spiritFormFeedback.textContent = err.message || 'Erro ao carregar imagem.';
+                    }
+                } finally {
+                    spiritMediaFileInput.value = '';
+                }
+            });
+        }
+
+        if (spiritRestoreDefaultBtn && window.FuriaDataService.getDefaultSpiritCards) {
+            spiritRestoreDefaultBtn.addEventListener('click', () => {
+                const slug = document.getElementById('spirit-slug-input').value;
+                const def = window.FuriaDataService.getDefaultSpiritCards().find(c => c.slug === slug);
+                if (def) {
+                    populateSpiritModalFields(def);
+                }
+            });
+        }
+
+        if (spiritForm) {
+            spiritForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const saveBtn = document.getElementById('save-spirit-btn');
+                const slug = document.getElementById('spirit-slug-input').value;
+
+                // Se o utilizador digitou um URL de mídia mas esqueceu de clicar em "+ Adicionar Mídia", inclui automaticamente
+                const pendingUrl = spiritMediaUrlInput ? spiritMediaUrlInput.value.trim() : '';
+                if (pendingUrl) {
+                    const pendingSafe = getSafeSpiritMediaSrc(pendingUrl);
+                    if (pendingSafe) {
+                        editingSpiritMedia.push({
+                            type: spiritMediaTypeSelect && spiritMediaTypeSelect.value === 'video' ? 'video' : 'image',
+                            url: pendingSafe,
+                            caption: spiritMediaCaptionInput ? spiritMediaCaptionInput.value.trim() : ''
+                        });
+                        spiritMediaUrlInput.value = '';
+                        if (spiritMediaCaptionInput) spiritMediaCaptionInput.value = '';
+                    }
+                }
+
+                const payload = {
+                    slug,
+                    title: document.getElementById('spirit-title-input').value,
+                    icon: document.getElementById('spirit-icon-select').value,
+                    summary: document.getElementById('spirit-summary-input').value,
+                    badge: document.getElementById('spirit-badge-input').value,
+                    content: document.getElementById('spirit-content-input').value,
+                    highlights: document.getElementById('spirit-highlights-input').value
+                        .split(/\r?\n/)
+                        .map(s => s.trim())
+                        .filter(Boolean),
+                    show_games_list: document.getElementById('spirit-show-games-checkbox').checked,
+                    media_items: editingSpiritMedia.map(m => ({ ...m })),
+                    cta_label: document.getElementById('spirit-cta-label-input').value,
+                    cta_url: document.getElementById('spirit-cta-url-input').value
+                };
+
+                try {
+                    if (saveBtn) {
+                        saveBtn.disabled = true;
+                        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+                    }
+
+                    const saved = await window.FuriaDataService.saveSpiritCard(payload);
+                    const idx = spiritCards.findIndex(c => c.slug === saved.slug);
+                    if (idx >= 0) {
+                        spiritCards[idx] = saved;
+                    } else {
+                        spiritCards.push(saved);
+                    }
+
+                    expandedSpiritSlug = saved.slug;
+                    closeSpiritEditModal();
+                    renderSpiritCards();
+                } catch (err) {
+                    if (spiritFormFeedback) {
+                        spiritFormFeedback.style.display = 'block';
+                        spiritFormFeedback.textContent = err.message || 'Erro ao salvar o card.';
+                    }
+                } finally {
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Salvar Card';
+                    }
+                }
             });
         }
 

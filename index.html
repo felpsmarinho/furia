@@ -54,22 +54,60 @@
     <section id="spirit" class="spirit section">
         <div class="container hidden">
             <h2>Esse é o nosso Espírito! <i class="fa-solid fa-bolt text-accent"></i></h2>
-            <div class="cards">
-                <div class="card" style="--delay: 0.1s">
-                    <i class="fa-solid fa-fire icon"></i>
-                    <h3>Intensidade</h3>
-                    <p>Jogue com intensidade e dê o seu máximo em cada ponto. A paixão pelo vôlei nos move.</p>
+            <p class="spirit-subtitle">Clique em cada pilar para expandir e conhecer mais sobre a nossa rotina, fotos, treinos e vídeos.</p>
+
+            <!-- Barra de Edição Administrativa dos Cards (exibida apenas quando autenticado) -->
+            <div id="admin-spirit-toolbar" class="admin-calendar-toolbar admin-spirit-toolbar" style="display: none;">
+                <div class="admin-toolbar-left">
+                    <div class="admin-toolbar-info">
+                        <span class="admin-active-pill"><i class="fa-solid fa-pen-to-square"></i> Modo Edição de Cards Ativo</span>
+                        <span id="admin-spirit-email" class="admin-user-email"></span>
+                    </div>
+                    <p class="admin-visual-tip">
+                        <i class="fa-solid fa-wand-magic-sparkles text-accent"></i>
+                        <strong>Edição Liberada:</strong> Clique em <strong>Editar Conteúdo</strong> em qualquer dos 4 cards abaixo para inserir textos, links, fotos ou vídeos dos jogos.
+                    </p>
                 </div>
-                <div class="card" style="--delay: 0.2s">
-                    <i class="fa-solid fa-users icon"></i>
-                    <h3>Comunidade</h3>
-                    <p>Evolua em comunidade, com respeito e companheirismo sempre. Dentro e fora de quadra.</p>
+                <div class="admin-toolbar-actions">
+                    <button type="button" id="admin-spirit-logout-btn" class="btn secondary-btn btn-sm">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sair
+                    </button>
                 </div>
-                <div class="card" style="--delay: 0.3s">
-                    <i class="fa-solid fa-arrow-trend-up icon"></i>
-                    <h3>Evolução</h3>
-                    <p>Foco na organização e aprendizado contínuo para alcançar grandes resultados e bons jogos.</p>
-                </div>
+            </div>
+
+            <div id="spirit-cards-grid" class="cards spirit-cards-grid">
+                <article class="card spirit-card" data-spirit-slug="organizacao" style="--delay: 0.1s" tabindex="0" role="button" aria-expanded="false">
+                    <div class="spirit-card-top">
+                        <i class="fa-solid fa-clipboard-check icon"></i>
+                        <h3>Organização</h3>
+                        <p>Listas de presença organizadas, gestão de vagas e inscrições oficiais pelo VolleyDash.</p>
+                        <span class="spirit-toggle-hint"><i class="fa-solid fa-chevron-down"></i> Ver detalhes</span>
+                    </div>
+                </article>
+                <article class="card spirit-card" data-spirit-slug="respeito" style="--delay: 0.2s" tabindex="0" role="button" aria-expanded="false">
+                    <div class="spirit-card-top">
+                        <i class="fa-solid fa-users icon"></i>
+                        <h3>Respeito</h3>
+                        <p>Comunidade acolhedora, jogo limpo e parceria verdadeira dentro e fora de quadra.</p>
+                        <span class="spirit-toggle-hint"><i class="fa-solid fa-chevron-down"></i> Ver detalhes</span>
+                    </div>
+                </article>
+                <article class="card spirit-card" data-spirit-slug="evolucao" style="--delay: 0.3s" tabindex="0" role="button" aria-expanded="false">
+                    <div class="spirit-card-top">
+                        <i class="fa-solid fa-arrow-trend-up icon"></i>
+                        <h3>Evolução</h3>
+                        <p>Treinos consistentes, dias definidos na semana e intercâmbios com equipas parceiras.</p>
+                        <span class="spirit-toggle-hint"><i class="fa-solid fa-chevron-down"></i> Ver detalhes</span>
+                    </div>
+                </article>
+                <article class="card spirit-card" data-spirit-slug="bons_jogos" style="--delay: 0.4s" tabindex="0" role="button" aria-expanded="false">
+                    <div class="spirit-card-top">
+                        <i class="fa-solid fa-volleyball icon"></i>
+                        <h3>Bons Jogos</h3>
+                        <p>Takes reais dos nossos jogos indoor e o projeto do Time Intermediário da Fúria.</p>
+                        <span class="spirit-toggle-hint"><i class="fa-solid fa-chevron-down"></i> Ver detalhes</span>
+                    </div>
+                </article>
             </div>
         </div>
     </section>
@@ -445,6 +483,137 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal Admin: Editar Conteúdo do Card Expansível ("Nosso Espírito") -->
+    <div id="spirit-modal-overlay" class="modal-overlay">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <h3 id="spirit-modal-title"><i class="fa-solid fa-pen-to-square text-accent"></i> Editar Card do Espírito</h3>
+                <button type="button" id="close-spirit-modal-btn" class="modal-close-btn" aria-label="Fechar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="spirit-form" class="modal-form">
+                <input type="hidden" id="spirit-slug-input">
+                <div id="spirit-form-feedback" class="modal-feedback" style="display: none;"></div>
+
+                <div class="modal-form-row">
+                    <div class="form-group modal-col-8">
+                        <label for="spirit-title-input">Título do Pilar *</label>
+                        <input type="text" id="spirit-title-input" required maxlength="80" placeholder="Ex: Organização">
+                    </div>
+                    <div class="form-group modal-col-4">
+                        <label for="spirit-icon-select">Ícone *</label>
+                        <select id="spirit-icon-select">
+                            <option value="fa-solid fa-clipboard-check">Lista / Organização</option>
+                            <option value="fa-solid fa-users">Comunidade / Respeito</option>
+                            <option value="fa-solid fa-arrow-trend-up">Evolução / Subida</option>
+                            <option value="fa-solid fa-volleyball">Bola de Vôlei / Jogos</option>
+                            <option value="fa-solid fa-bolt">Raio Fúria</option>
+                            <option value="fa-solid fa-fire">Intensidade</option>
+                            <option value="fa-solid fa-trophy">Troféu / Torneio</option>
+                            <option value="fa-solid fa-heart">Respeito / Coração</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-form-row">
+                    <div class="form-group modal-col-8">
+                        <label for="spirit-summary-input">Resumo Curto (Capa do Card) *</label>
+                        <input type="text" id="spirit-summary-input" required maxlength="280" placeholder="Texto curto apresentado antes de expandir...">
+                    </div>
+                    <div class="form-group modal-col-4">
+                        <label for="spirit-badge-input">Etiqueta Expandida</label>
+                        <input type="text" id="spirit-badge-input" maxlength="80" placeholder="Ex: VolleyDash & Jogos">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="spirit-content-input">Conteúdo Completo (Área Expandida) *</label>
+                    <textarea id="spirit-content-input" rows="4" required maxlength="4000" placeholder="Escreva aqui os detalhes que aparecem quando o visitante clicar no card..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="spirit-highlights-input">Tópicos de Destaque (um tópico por linha)</label>
+                    <textarea id="spirit-highlights-input" rows="3" placeholder="Ex: Treinos às quartas na Arca d'Água&#10;Jogos amistosos com equipas parceiras"></textarea>
+                </div>
+
+                <div class="series-option-box spirit-games-toggle-box">
+                    <label class="checkbox-inline-label">
+                        <input type="checkbox" id="spirit-show-games-checkbox">
+                        <span><i class="fa-solid fa-calendar-check text-accent"></i> Exibir automaticamente a <strong>Lista de Próximos Jogos do Calendário</strong> dentro deste card expandido.</span>
+                    </label>
+                </div>
+
+                <!-- Construtor de Galeria (Fotos & Takes/Vídeos) -->
+                <div class="recurrence-builder-box spirit-media-builder">
+                    <div class="recurrence-header">
+                        <label><i class="fa-solid fa-photo-film text-accent"></i> Fotos, Takes e Vídeos do Card</label>
+                        <label for="spirit-media-file-input" class="spirit-upload-photo-btn">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Carregar Foto do Dispositivo
+                        </label>
+                        <input type="file" id="spirit-media-file-input" accept="image/png,image/jpeg,image/webp" class="hidden-field">
+                    </div>
+
+                    <div class="modal-form-row">
+                        <div class="form-group modal-col-4">
+                            <select id="spirit-media-type-select" aria-label="Tipo de mídia">
+                                <option value="image">Foto / Imagem</option>
+                                <option value="video">Vídeo / Take (.mp4 ou link)</option>
+                            </select>
+                        </div>
+                        <div class="form-group modal-col-8">
+                            <input type="text" id="spirit-media-url-input" placeholder="URL (https://... ou public/img/... ou public/video/...)">
+                        </div>
+                    </div>
+
+                    <div class="spirit-media-add-row">
+                        <input type="text" id="spirit-media-caption-input" maxlength="160" placeholder="Legenda da foto ou vídeo (opcional)">
+                        <button type="button" id="spirit-add-media-btn" class="btn secondary-btn btn-sm">
+                            <i class="fa-solid fa-plus"></i> Adicionar Mídia
+                        </button>
+                    </div>
+
+                    <div id="spirit-media-items-list" class="spirit-media-admin-list"></div>
+                </div>
+
+                <div class="modal-form-row">
+                    <div class="form-group modal-col-4">
+                        <label for="spirit-cta-label-input">Texto do Botão (Opcional)</label>
+                        <input type="text" id="spirit-cta-label-input" maxlength="80" placeholder="Ex: Abrir no VolleyDash">
+                    </div>
+                    <div class="form-group modal-col-8">
+                        <label for="spirit-cta-url-input">Link do Botão (Opcional)</label>
+                        <input type="text" id="spirit-cta-url-input" placeholder="Ex: https://www.volleydash.online/... ou #calendar">
+                    </div>
+                </div>
+
+                <div class="modal-footer spirit-modal-footer">
+                    <button type="button" id="spirit-restore-default-btn" class="btn secondary-btn btn-sm">
+                        <i class="fa-solid fa-rotate-left"></i> Restaurar Padrão
+                    </button>
+                    <div class="spirit-modal-footer-right">
+                        <button type="button" id="cancel-spirit-modal-btn" class="btn secondary-btn btn-sm">Cancelar</button>
+                        <button type="submit" id="save-spirit-btn" class="btn primary-btn btn-sm">
+                            <i class="fa-solid fa-check"></i> Salvar Card
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lightbox de Visualização de Foto -->
+    <div id="spirit-lightbox-overlay" class="modal-overlay spirit-lightbox-overlay">
+        <div class="spirit-lightbox-content">
+            <button type="button" id="close-spirit-lightbox-btn" class="modal-close-btn spirit-lightbox-close" aria-label="Fechar foto">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <img id="spirit-lightbox-img" src="" alt="Foto Fúria Voleibol">
+            <p id="spirit-lightbox-caption" class="spirit-lightbox-caption"></p>
         </div>
     </div>
 
