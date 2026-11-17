@@ -3606,24 +3606,128 @@ footer p {
     transition: transform 0.25s ease, border-color 0.25s ease;
 }
 
-.spirit-media-image-btn {
-    padding: 0;
-    font-family: inherit;
-    cursor: pointer;
+.spirit-media-item.media-span-full {
+    grid-column: 1 / -1;
 }
 
-.spirit-media-image-btn:hover {
+.spirit-media-photo-card:hover {
     transform: translateY(-2px);
     border-color: var(--accent-color);
+}
+
+.spirit-media-image-btn {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
 }
 
 .spirit-media-image-btn img,
 .spirit-media-video video {
     width: 100%;
-    height: 220px;
+    height: 280px;
     object-fit: cover;
+    object-position: 50% 35%;
     display: block;
     background: #020617;
+}
+
+/* Redimensionador inline (visível para admin no card expandido) */
+.spirit-inline-resizer {
+    background: rgba(11, 7, 38, 0.92);
+    border-top: 1px solid rgba(192, 11, 253, 0.28);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.spirit-inline-resizer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.spirit-resizer-group {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.spirit-resizer-chip {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #cbd5e1;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.spirit-resizer-chip:hover,
+.spirit-resizer-chip.active {
+    background: rgba(192, 11, 253, 0.28);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+.spirit-pos-row {
+    gap: 10px;
+}
+
+.spirit-pos-label {
+    font-size: 0.72rem;
+    color: #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.spirit-pos-slider {
+    flex: 1;
+    min-width: 90px;
+    accent-color: var(--accent-color);
+}
+
+.spirit-resize-drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(192, 11, 253, 0.14);
+    border: 1px dashed rgba(192, 11, 253, 0.55);
+    color: #f0abfc;
+    font-size: 0.74rem;
+    font-weight: 700;
+    user-select: none;
+    touch-action: none;
+    cursor: ns-resize !important;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.spirit-resize-drag-handle:hover,
+.spirit-resize-drag-handle.dragging {
+    background: rgba(192, 11, 253, 0.34);
+    border-color: #fff;
+    color: #fff;
 }
 
 .spirit-media-caption {
@@ -3731,15 +3835,90 @@ footer p {
     gap: 12px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 8px 10px;
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.spirit-media-admin-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+}
+
+.spirit-media-admin-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
 }
 
 .spirit-media-admin-info {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: 1;
     min-width: 0;
+}
+
+.spirit-modal-caption-input {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 10px !important;
+    font-size: 0.84rem !important;
+    border-radius: 8px !important;
+}
+
+.spirit-modal-live-preview {
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #020617;
+    border: 1px solid rgba(192, 11, 253, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spirit-modal-live-img,
+.spirit-modal-live-video {
+    width: 100%;
+    display: block;
+    background: #020617;
+}
+
+.spirit-media-resizer-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.spirit-resizer-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.spirit-resizer-field label {
+    font-size: 0.76rem !important;
+    color: #cbd5e1 !important;
+    margin-bottom: 0 !important;
+}
+
+.spirit-resizer-field input[type="range"] {
+    width: 100%;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    accent-color: var(--accent-color);
+    box-shadow: none !important;
+}
+
+.spirit-resizer-field select {
+    padding: 7px 10px !important;
+    font-size: 0.82rem !important;
+    border-radius: 8px !important;
 }
 
 .spirit-media-thumb {
@@ -3827,6 +4006,93 @@ footer p {
     font-size: 0.95rem;
 }
 
+/* ==========================================================================
+   GALERIA & VÍDEO DO CAMINHO / PAVILHÃO ("NOSSA QUADRA")
+   ========================================================================== */
+
+.admin-court-toolbar {
+    max-width: 1000px;
+    margin: 0 auto 24px auto;
+}
+
+.court-showcase-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 28px auto 0 auto;
+    text-align: left;
+}
+
+.court-showcase-card {
+    background: rgba(16, 10, 48, 0.72);
+    border: 1px solid rgba(192, 11, 253, 0.34);
+    border-radius: 20px;
+    padding: 26px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.48);
+}
+
+.court-showcase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.court-showcase-meta {
+    flex: 1;
+    min-width: min(100%, 260px);
+}
+
+.court-showcase-meta h3 {
+    font-size: 1.45rem;
+    color: #fff;
+    margin: 10px 0 8px 0;
+}
+
+.court-showcase-meta p {
+    font-size: 1rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+    margin-bottom: 0 !important;
+}
+
+.court-showcase-empty {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(192, 11, 253, 0.38);
+    border-radius: 14px;
+    padding: 18px 20px;
+}
+
+.court-showcase-empty i {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.court-showcase-empty > div {
+    flex: 1;
+    min-width: min(100%, 220px);
+}
+
+.court-showcase-empty strong {
+    display: block;
+    color: #fff;
+    font-size: 0.98rem;
+    margin-bottom: 4px;
+}
+
+.court-showcase-empty p {
+    font-size: 0.88rem !important;
+    color: #94a3b8 !important;
+    margin-bottom: 0 !important;
+}
+
 @media (max-width: 1100px) {
     .spirit-cards-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3881,6 +4147,34 @@ footer p {
     .spirit-media-add-row {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .spirit-media-resizer-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .spirit-media-admin-info {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .court-showcase-card {
+        padding: 18px 14px;
+        border-radius: 16px;
+    }
+
+    .court-showcase-meta h3 {
+        font-size: 1.2rem;
+    }
+
+    .court-showcase-empty {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .court-showcase-empty .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 
@@ -3972,6 +4266,7 @@ html.is-firefox .spirit-media-item {
 html.is-firefox .calendar-widget-card,
 html.is-firefox .games-panel-card,
 html.is-firefox .admin-calendar-toolbar,
+html.is-firefox .court-showcase-card,
 html.is-firefox .login-card,
 html.is-firefox .modal-card {
     backdrop-filter: none;

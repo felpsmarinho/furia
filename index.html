@@ -237,6 +237,23 @@
             <h2>Nossa Quadra <i class="fa-solid fa-map-location-dot text-accent"></i></h2>
             <p>Venha nos visitar, treinar e fazer parte da família Fúria!</p>
 
+            <!-- Barra Admin de Mídia da Quadra (exibida apenas quando autenticado) -->
+            <div id="admin-court-toolbar" class="admin-calendar-toolbar admin-court-toolbar" style="display: none;">
+                <div class="admin-toolbar-left">
+                    <div class="admin-toolbar-info">
+                        <span class="admin-active-pill"><i class="fa-solid fa-photo-film"></i> Guia do Pavilhão</span>
+                    </div>
+                    <p class="admin-visual-tip">
+                        Adicione vídeos mostrando o caminho até o pavilhão e fotos da quadra para os visitantes.
+                    </p>
+                </div>
+                <div class="admin-toolbar-actions">
+                    <button type="button" id="open-court-media-modal-btn" class="btn primary-btn btn-sm">
+                        <i class="fa-solid fa-photo-film"></i> Adicionar / Editar Vídeo e Fotos da Quadra
+                    </button>
+                </div>
+            </div>
+
             <div class="map-container">
                 <iframe src="https://maps.google.com/maps?q=Indoor+Soccer+Arca+d%27%C3%81gua,+Porto&t=&z=15&ie=UTF8&iwloc=&output=embed" title="Google Maps - Indoor Soccer Arca D'Água"
                     allowfullscreen="" loading="eager"></iframe>
@@ -247,6 +264,9 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Galeria de Caminho & Pavilhão da Nossa Quadra -->
+            <div id="court-showcase-container" class="court-showcase-container" style="display: none;"></div>
         </div>
     </section>
 
@@ -553,9 +573,9 @@
                     <div class="recurrence-header">
                         <label><i class="fa-solid fa-photo-film text-accent"></i> Fotos, Takes e Vídeos do Card</label>
                         <label for="spirit-media-file-input" class="spirit-upload-photo-btn">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> Carregar Foto do Dispositivo
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Carregar Foto ou Vídeo
                         </label>
-                        <input type="file" id="spirit-media-file-input" accept="image/png,image/jpeg,image/webp" class="hidden-field">
+                        <input type="file" id="spirit-media-file-input" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple class="hidden-field">
                     </div>
 
                     <div class="modal-form-row">

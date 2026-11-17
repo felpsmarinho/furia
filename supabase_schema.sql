@@ -170,3 +170,88 @@ create policy "spirit_cards_admin_delete"
     for delete
     to authenticated
     using ((select private.is_furia_admin()));
+
+-- 9. Bucket de Mídia no Supabase Storage (Fotos e Vídeos dos Cards)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+    'spirit-media',
+    'spirit-media',
+    true,
+    52428800,
+    array['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/quicktime']
+)
+on conflict (id) do update set
+    public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+create policy "spirit_media_public_select"
+    on storage.objects
+    for select
+    to anon, authenticated
+    using (bucket_id = 'spirit-media');
+
+create policy "spirit_media_admin_insert"
+    on storage.objects
+    for insert
+    to authenticated
+    with check (bucket_id = 'spirit-media' and (select private.is_furia_admin()));
+
+create policy "spirit_media_admin_update"
+    on storage.objects
+    for update
+    to authenticated
+    using (bucket_id = 'spirit-media' and (select private.is_furia_admin()))
+    with check (bucket_id = 'spirit-media' and (select private.is_furia_admin()));
+
+create policy "spirit_media_admin_delete"
+    on storage.objects
+    for delete
+    to authenticated
+    using (bucket_id = 'spirit-media' and (select private.is_furia_admin()));
+
+-- 10. Tabela pública de Mídia da Secção "Nossa Quadra" (Caminho e Pavilhão)
+create index if not exists idx_spirit_cards_updated_by on public.spirit_cards (updated_by);
+
+create table if not exists public.court_showcase (
+    slug text primary key default 'nossa_quadra' check (slug = 'nossa_quadra'),
+    title text not null default 'Como Chegar & Conheça o Pavilhão' check (char_length(trim(title)) between 2 and 120),
+    badge text default 'Guia de Acesso & Estrutura' check (badge is null or char_length(badge) <= 80),
+    content text not null default 'Veja o caminho até a nossa quadra no Indoor Soccer Arca d''Água e conheça o pavilhão onde realizamos os nossos jogos e treinos.' check (char_length(trim(content)) between 2 and 4000),
+    media_items jsonb not null default '[]'::jsonb,
+    updated_by uuid references auth.users(id) on delete set null default auth.uid(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_court_showcase_updated_by on public.court_showcase (updated_by);
+
+grant select on table public.court_showcase to anon, authenticated;
+grant insert, update, delete on table public.court_showcase to authenticated;
+
+alter table public.court_showcase enable row level security;
+alter table public.court_showcase force row level security;
+
+create policy "court_showcase_public_select"
+    on public.court_showcase
+    for select
+    to anon, authenticated
+    using (true);
+
+create policy "court_showcase_admin_insert"
+    on public.court_showcase
+    for insert
+    to authenticated
+    with check ((select private.is_furia_admin()));
+
+create policy "court_showcase_admin_update"
+    on public.court_showcase
+    for update
+    to authenticated
+    using ((select private.is_furia_admin()))
+    with check ((select private.is_furia_admin()));
+
+create policy "court_showcase_admin_delete"
+    on public.court_showcase
+    for delete
+    to authenticated
+    using ((select private.is_furia_admin()));

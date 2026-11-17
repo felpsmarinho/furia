@@ -15,6 +15,16 @@ const NO_STATUS_SENTINEL = '__no_status__';
 const SPIRIT_CARD_SENTINEL = '__SPIRIT_CARD__';
 const SPIRIT_CARD_MAPS_SENTINEL = 'https://spirit-card.furia.local';
 const SPIRIT_STORAGE_KEY = 'furia_spirit_cards_v1';
+const SPIRIT_MEDIA_BUCKET = 'spirit-media';
+const COURT_STORAGE_KEY = 'furia_court_showcase_v1';
+
+const DEFAULT_COURT_SHOWCASE = {
+    slug: 'nossa_quadra',
+    title: 'Como Chegar & Conheça o Pavilhão',
+    badge: 'Guia de Acesso & Estrutura',
+    content: 'Veja o caminho até a nossa quadra no Indoor Soccer Arca d’Água e conheça o pavilhão onde realizamos os nossos jogos e treinos.',
+    media_items: []
+};
 
 const DEFAULT_SPIRIT_CARDS = [
     {
@@ -268,7 +278,23 @@ function sanitizeMediaUrl(url) {
     if (/^data:image\/(png|jpe?g|webp|gif);base64,/i.test(clean)) {
         return clean;
     }
-    throw new Error('URL de mídia inválida. Utilize links https://, caminhos em public/ ou upload de imagem PNG/JPG/WEBP.');
+    throw new Error('URL de mídia inválida. Utilize links https://, caminhos em public/ ou upload para o Supabase Storage (fotos e vídeos).');
+}
+
+function normalizeMediaSizing(item) {
+    const parsedHeight = Number(item && item.height);
+    const height = Number.isFinite(parsedHeight)
+        ? Math.max(140, Math.min(640, Math.round(parsedHeight)))
+        : 280;
+    const rawFit = String((item && item.fit) || 'cover').toLowerCase();
+    const fit = ['cover', 'contain', 'auto'].includes(rawFit) ? rawFit : 'cover';
+    const width_mode = (item && item.width_mode) === 'full' ? 'full' : 'grid';
+    const parsedPosY = Number(item && item.pos_y);
+    const pos_y = Number.isFinite(parsedPosY)
+        ? Math.max(0, Math.min(100, Math.round(parsedPosY)))
+        : 35;
+
+    return { height, fit, width_mode, pos_y };
 }
 
 function normalizeSpiritCard(raw, fallback) {
@@ -285,11 +311,13 @@ function normalizeSpiritCard(raw, fallback) {
             if (!item || !item.url) return null;
             try {
                 const safeUrl = sanitizeMediaUrl(item.url);
-                const inferredVideo = item.type === 'video' || /\.(mp4|webm|ogg)(\?|$)/i.test(safeUrl);
+                const inferredVideo = item.type === 'video' || /\.(mp4|webm|ogg|mov)(\?|$)/i.test(safeUrl);
+                const sizing = normalizeMediaSizing(item);
                 return {
                     type: inferredVideo ? 'video' : 'image',
                     url: safeUrl,
-                    caption: String(item.caption || '').trim().slice(0, 160)
+                    caption: String(item.caption || '').trim().slice(0, 160),
+                    ...sizing
                 };
             } catch {
                 return null;
@@ -306,7 +334,7 @@ function normalizeSpiritCard(raw, fallback) {
         badge: String((raw && raw.badge !== undefined ? raw.badge : base.badge) || '').trim(),
         content: String((raw && raw.content) || base.content || '').trim(),
         highlights: rawHighlights.map(h => String(h).trim()).filter(Boolean).slice(0, 10),
-        media_items: mediaItems.slice(0, 12),
+        media_items: mediaItems.slice(0, 40),
         cta_label: String((raw && raw.cta_label !== undefined ? raw.cta_label : base.cta_label) || '').trim(),
         cta_url: String((raw && raw.cta_url !== undefined ? raw.cta_url : base.cta_url) || '').trim(),
         show_games_list: typeof (raw && raw.show_games_list) === 'boolean'
@@ -339,6 +367,65 @@ function writeSpiritLocalCache(cardsArray) {
 
 function cloneDefaultSpiritCards() {
     return DEFAULT_SPIRIT_CARDS.map(card => normalizeSpiritCard(card, card));
+}
+
+function normalizeMediaItemList(rawList, defaultWidthMode = 'grid') {
+    const rawMedia = Array.isArray(rawList) ? rawList : [];
+    return rawMedia
+        .map(item => {
+            if (!item || !item.url) return null;
+            try {
+                const safeUrl = sanitizeMediaUrl(item.url);
+                const inferredVideo = item.type === 'video' || /\.(mp4|webm|ogg|mov)(\?|$)/i.test(safeUrl);
+                const sizing = normalizeMediaSizing({
+                    width_mode: defaultWidthMode,
+                    ...item
+                });
+                return {
+                    type: inferredVideo ? 'video' : 'image',
+                    url: safeUrl,
+                    caption: String(item.caption || '').trim().slice(0, 160),
+                    ...sizing
+                };
+            } catch {
+                return null;
+            }
+        })
+        .filter(Boolean)
+        .slice(0, 40);
+}
+
+function normalizeCourtShowcase(raw) {
+    const rawList = Array.isArray(raw && raw.media_items)
+        ? raw.media_items
+        : DEFAULT_COURT_SHOWCASE.media_items;
+    const defaultWidthMode = rawList.length === 1 ? 'full' : 'grid';
+
+    return {
+        slug: 'nossa_quadra',
+        title: String((raw && raw.title) || DEFAULT_COURT_SHOWCASE.title).trim(),
+        badge: String((raw && raw.badge !== undefined ? raw.badge : DEFAULT_COURT_SHOWCASE.badge) || '').trim(),
+        content: String((raw && raw.content) || DEFAULT_COURT_SHOWCASE.content).trim(),
+        media_items: normalizeMediaItemList(rawList, defaultWidthMode),
+        updated_at: (raw && raw.updated_at) || null
+    };
+}
+
+function readCourtLocalCache() {
+    try {
+        const raw = localStorage.getItem(COURT_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+function writeCourtLocalCache(showcase) {
+    try {
+        localStorage.setItem(COURT_STORAGE_KEY, JSON.stringify(showcase));
+    } catch {
+        // Ignore storage quota errors
+    }
 }
 
 function isMissingSpiritTableError(err) {
@@ -829,7 +916,8 @@ const FuriaDataService = {
         const validatedMedia = rawMedia.map(item => ({
             type: item && item.type === 'video' ? 'video' : 'image',
             url: sanitizeMediaUrl(item && item.url),
-            caption: String((item && item.caption) || '').trim().slice(0, 160)
+            caption: String((item && item.caption) || '').trim().slice(0, 160),
+            ...normalizeMediaSizing(item)
         }));
 
         const normalized = normalizeSpiritCard({
@@ -934,6 +1022,155 @@ const FuriaDataService = {
         currentCache[normalized.slug] = normalized;
         const fullList = cloneDefaultSpiritCards().map(def => currentCache[def.slug] ? normalizeSpiritCard(currentCache[def.slug], def) : def);
         writeSpiritLocalCache(fullList);
+        return normalized;
+    },
+
+    async uploadSpiritMedia(file, slug = 'geral') {
+        if (!supabaseClient) {
+            throw new Error('Supabase não conectado para envio de mídia.');
+        }
+        if (!file || !file.type) {
+            throw new Error('Selecione um ficheiro de foto ou vídeo válido.');
+        }
+
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        if (!isImage && !isVideo) {
+            throw new Error('Formato não suportado. Envie imagens (PNG, JPG, WEBP, GIF) ou vídeos (MP4, WEBM, MOV).');
+        }
+
+        const MAX_SIZE_BYTES = 50 * 1024 * 1024;
+        if (file.size > MAX_SIZE_BYTES) {
+            throw new Error('O ficheiro excede o limite de 50 MB do Supabase Storage.');
+        }
+
+        await CrossPageSessionBridge.synchronizeIfNeeded();
+
+        const safeSlug = String(slug || 'geral').replace(/[^a-zA-Z0-9_-]/g, '') || 'geral';
+        const rawExt = (file.name && file.name.includes('.'))
+            ? file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '')
+            : '';
+        const mimeFallbackExt = {
+            'image/jpeg': 'jpg',
+            'image/png': 'png',
+            'image/webp': 'webp',
+            'image/gif': 'gif',
+            'video/mp4': 'mp4',
+            'video/webm': 'webm',
+            'video/quicktime': 'mov'
+        };
+        const ext = rawExt || mimeFallbackExt[file.type] || (isVideo ? 'mp4' : 'jpg');
+        const randomSuffix = Math.random().toString(36).slice(2, 10);
+        const filePath = `${safeSlug}/${Date.now()}-${randomSuffix}.${ext}`;
+
+        const { error: uploadErr } = await supabaseClient.storage
+            .from(SPIRIT_MEDIA_BUCKET)
+            .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false,
+                contentType: file.type
+            });
+
+        if (uploadErr) {
+            throw new Error('Erro ao enviar mídia para o Supabase Storage: ' + uploadErr.message);
+        }
+
+        const { data: urlData } = supabaseClient.storage
+            .from(SPIRIT_MEDIA_BUCKET)
+            .getPublicUrl(filePath);
+
+        if (!urlData || !urlData.publicUrl) {
+            throw new Error('Não foi possível obter a URL pública do ficheiro enviado.');
+        }
+
+        return {
+            type: isVideo ? 'video' : 'image',
+            url: urlData.publicUrl
+        };
+    },
+
+    // --- CRUD DA GALERIA DA SECÇÃO "NOSSA QUADRA" ---
+    getDefaultCourtShowcase() {
+        return normalizeCourtShowcase(DEFAULT_COURT_SHOWCASE);
+    },
+
+    async fetchCourtShowcase() {
+        let fetched = null;
+        if (supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('court_showcase')
+                    .select('*')
+                    .eq('slug', 'nossa_quadra')
+                    .maybeSingle();
+
+                if (!error && data) {
+                    fetched = normalizeCourtShowcase(data);
+                    writeCourtLocalCache(fetched);
+                    return fetched;
+                }
+            } catch {
+                // Usa cache local se offline
+            }
+        }
+
+        const cached = readCourtLocalCache();
+        return cached ? normalizeCourtShowcase(cached) : normalizeCourtShowcase(DEFAULT_COURT_SHOWCASE);
+    },
+
+    async saveCourtShowcase(payload) {
+        const title = String((payload && payload.title) || '').trim();
+        const content = String((payload && payload.content) || '').trim();
+        if (title.length < 2) throw new Error('O título da secção Nossa Quadra deve ter pelo menos 2 caracteres.');
+        if (content.length < 4) throw new Error('A descrição deve ter pelo menos 4 caracteres.');
+
+        const rawMedia = Array.isArray(payload && payload.media_items) ? payload.media_items : [];
+        const validatedMedia = rawMedia.map(item => ({
+            type: item && item.type === 'video' ? 'video' : 'image',
+            url: sanitizeMediaUrl(item && item.url),
+            caption: String((item && item.caption) || '').trim().slice(0, 160),
+            ...normalizeMediaSizing(item)
+        }));
+
+        const normalized = normalizeCourtShowcase({
+            ...payload,
+            slug: 'nossa_quadra',
+            title,
+            content,
+            media_items: validatedMedia,
+            updated_at: new Date().toISOString()
+        });
+
+        if (supabaseClient) {
+            await CrossPageSessionBridge.synchronizeIfNeeded();
+
+            const dbRow = {
+                slug: 'nossa_quadra',
+                title: normalized.title.slice(0, 120),
+                badge: normalized.badge ? normalized.badge.slice(0, 80) : null,
+                content: normalized.content.slice(0, 4000),
+                media_items: normalized.media_items,
+                updated_at: new Date().toISOString()
+            };
+
+            const { data, error } = await supabaseClient
+                .from('court_showcase')
+                .upsert(dbRow, { onConflict: 'slug' })
+                .select()
+                .single();
+
+            if (error) {
+                throw new Error('Erro ao guardar mídia da Nossa Quadra no Supabase: ' + error.message);
+            }
+
+            if (data) {
+                const saved = normalizeCourtShowcase(data);
+                writeCourtLocalCache(saved);
+                return saved;
+            }
+        }
+
+        writeCourtLocalCache(normalized);
         return normalized;
     }
 };

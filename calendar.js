@@ -22,6 +22,7 @@
     let allGames = [];
     let currentSession = null;
     let spiritCards = [];
+    let courtShowcase = null;
     let expandedSpiritSlug = null;
     let editingSpiritMedia = [];
     let viewDate = new Date();
@@ -98,6 +99,11 @@
     const adminSpiritToolbarEl = document.getElementById('admin-spirit-toolbar');
     const adminSpiritEmailEl = document.getElementById('admin-spirit-email');
     const adminSpiritLogoutBtn = document.getElementById('admin-spirit-logout-btn');
+
+    // Elementos - Mídia da Secção "Nossa Quadra"
+    const adminCourtToolbarEl = document.getElementById('admin-court-toolbar');
+    const openCourtMediaModalBtn = document.getElementById('open-court-media-modal-btn');
+    const courtShowcaseContainerEl = document.getElementById('court-showcase-container');
 
     // Modal Admin - Edição dos Cards do Espírito
     const spiritModalOverlay = document.getElementById('spirit-modal-overlay');
@@ -214,7 +220,11 @@
         spiritCards = window.FuriaDataService.getDefaultSpiritCards
             ? window.FuriaDataService.getDefaultSpiritCards()
             : [];
+        courtShowcase = window.FuriaDataService.getDefaultCourtShowcase
+            ? window.FuriaDataService.getDefaultCourtShowcase()
+            : null;
         renderSpiritCards();
+        renderCourtShowcase();
 
         await checkAdminState();
         window.FuriaDataService.startInactivityGuard(async () => {
@@ -224,7 +234,8 @@
 
         await Promise.all([
             loadAndRenderGames(),
-            loadSpiritCards()
+            loadSpiritCards(),
+            loadCourtShowcase()
         ]);
         bindEvents();
     }
@@ -239,6 +250,10 @@
 
         if (adminSpiritToolbarEl) {
             adminSpiritToolbarEl.style.display = isLogged ? 'flex' : 'none';
+        }
+
+        if (adminCourtToolbarEl) {
+            adminCourtToolbarEl.style.display = isLogged ? 'flex' : 'none';
         }
 
         if (calendarWidgetCardEl) {
@@ -284,6 +299,16 @@
         renderSpiritCards();
     }
 
+    async function loadCourtShowcase() {
+        if (!window.FuriaDataService || !window.FuriaDataService.fetchCourtShowcase) return;
+        try {
+            courtShowcase = await window.FuriaDataService.fetchCourtShowcase();
+        } catch (err) {
+            console.error(err);
+        }
+        renderCourtShowcase();
+    }
+
     async function loadAndRenderGames() {
         try {
             allGames = await window.FuriaDataService.fetchGames();
@@ -305,6 +330,7 @@
         }
         renderGamesList();
         renderSpiritCards();
+        renderCourtShowcase();
     }
 
     // --- CARDS EXPANSÍVEIS ("ESSE É O NOSSO ESPÍRITO!") ---
@@ -335,7 +361,79 @@
     }
 
     function isVideoFileUrl(url) {
-        return /\.(mp4|webm|ogg)(\?|$)/i.test(String(url || '').trim());
+        return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(String(url || '').trim());
+    }
+
+    function getMediaSizing(item) {
+        const parsedH = Number(item && item.height);
+        const height = Number.isFinite(parsedH) ? Math.max(140, Math.min(640, Math.round(parsedH))) : 280;
+        const rawFit = String((item && item.fit) || 'cover').toLowerCase();
+        const fit = ['cover', 'contain', 'auto'].includes(rawFit) ? rawFit : 'cover';
+        const widthMode = (item && item.width_mode) === 'full' ? 'full' : 'grid';
+        const parsedPosY = Number(item && item.pos_y);
+        const posY = Number.isFinite(parsedPosY) ? Math.max(0, Math.min(100, Math.round(parsedPosY))) : 35;
+        return { height, fit, width_mode: widthMode, pos_y: posY };
+    }
+
+    function buildMediaInlineStyle(sizing, scale = 1) {
+        const scaledHeight = Math.round(sizing.height * scale);
+        if (sizing.fit === 'auto') {
+            return `height: auto; max-height: ${scaledHeight}px; object-fit: contain; object-position: 50% ${sizing.pos_y}%;`;
+        }
+        return `height: ${scaledHeight}px; object-fit: ${sizing.fit}; object-position: 50% ${sizing.pos_y}%;`;
+    }
+
+    function applySizingToMediaElement(mediaEl, sizing, scale = 1) {
+        if (!mediaEl) return;
+        const scaledHeight = Math.round(sizing.height * scale);
+        if (sizing.fit === 'auto') {
+            mediaEl.style.height = 'auto';
+            mediaEl.style.maxHeight = `${scaledHeight}px`;
+            mediaEl.style.objectFit = 'contain';
+        } else {
+            mediaEl.style.maxHeight = '';
+            mediaEl.style.height = `${scaledHeight}px`;
+            mediaEl.style.objectFit = sizing.fit;
+        }
+        mediaEl.style.objectPosition = `50% ${sizing.pos_y}%`;
+    }
+
+    async function persistInlineMediaResize(cardSlug, mediaIndex, patch) {
+        if (cardSlug === 'nossa_quadra') {
+            if (!courtShowcase || !Array.isArray(courtShowcase.media_items) || !courtShowcase.media_items[mediaIndex]) return;
+            const currentCourtItem = courtShowcase.media_items[mediaIndex];
+            courtShowcase.media_items[mediaIndex] = {
+                ...currentCourtItem,
+                ...getMediaSizing({ ...currentCourtItem, ...patch })
+            };
+            try {
+                if (window.FuriaDataService && window.FuriaDataService.saveCourtShowcase) {
+                    courtShowcase = await window.FuriaDataService.saveCourtShowcase(courtShowcase);
+                }
+            } catch (err) {
+                console.error('Erro ao guardar redimensionamento da Nossa Quadra:', err);
+            }
+            return;
+        }
+
+        const card = spiritCards.find(c => c.slug === cardSlug);
+        if (!card || !Array.isArray(card.media_items) || !card.media_items[mediaIndex]) return;
+
+        const current = card.media_items[mediaIndex];
+        card.media_items[mediaIndex] = {
+            ...current,
+            ...getMediaSizing({ ...current, ...patch })
+        };
+
+        try {
+            if (window.FuriaDataService && window.FuriaDataService.saveSpiritCard) {
+                const saved = await window.FuriaDataService.saveSpiritCard(card);
+                const idx = spiritCards.findIndex(c => c.slug === saved.slug);
+                if (idx >= 0) spiritCards[idx] = saved;
+            }
+        } catch (err) {
+            console.error('Erro ao guardar redimensionamento:', err);
+        }
     }
 
     function pauseSpiritVideos() {
@@ -422,29 +520,77 @@
         `;
     }
 
-    function buildSpiritMediaHtml(mediaItems) {
+    function buildSpiritMediaHtml(mediaItems, cardSlug) {
+        const isAdmin = isAdminLogged();
         const validItems = (mediaItems || [])
-            .map(m => ({ ...m, safeUrl: getSafeSpiritMediaSrc(m && m.url) }))
+            .map((m, idx) => ({
+                ...m,
+                origIndex: idx,
+                safeUrl: getSafeSpiritMediaSrc(m && m.url),
+                sizing: getMediaSizing(m)
+            }))
             .filter(m => m.safeUrl);
 
         if (!validItems.length) return '';
+
+        const buildInlineResizerBar = (item) => {
+            if (!isAdmin) return '';
+            const s = item.sizing;
+            const slugAttr = escapeHtml(cardSlug || '');
+            const idxAttr = item.origIndex;
+
+            return `
+                <div class="spirit-inline-resizer" data-slug="${slugAttr}" data-media-index="${idxAttr}">
+                    <div class="spirit-inline-resizer-row">
+                        <div class="spirit-resizer-group" role="group" aria-label="Ajuste de imagem ou vídeo">
+                            <button type="button" class="spirit-resizer-chip${s.fit === 'cover' ? ' active' : ''}" data-resize-fit="cover" title="Preencher quadro">
+                                <i class="fa-solid fa-crop-simple"></i> Preencher
+                            </button>
+                            <button type="button" class="spirit-resizer-chip${s.fit === 'contain' ? ' active' : ''}" data-resize-fit="contain" title="Mostrar inteira sem corte">
+                                <i class="fa-solid fa-expand"></i> Inteira
+                            </button>
+                            <button type="button" class="spirit-resizer-chip${s.fit === 'auto' ? ' active' : ''}" data-resize-fit="auto" title="Proporção original">
+                                <i class="fa-solid fa-arrows-left-right-to-line"></i> Original
+                            </button>
+                        </div>
+                        <button type="button" class="spirit-resizer-chip${s.width_mode === 'full' ? ' active' : ''}" data-resize-width="${s.width_mode === 'full' ? 'grid' : 'full'}" title="Alternar entre grelha e largura total">
+                            <i class="fa-solid ${s.width_mode === 'full' ? 'fa-table-columns' : 'fa-left-right'}"></i> ${s.width_mode === 'full' ? 'Grelha' : '100%'}
+                        </button>
+                    </div>
+                    ${s.fit === 'cover' ? `
+                        <div class="spirit-inline-resizer-row spirit-pos-row">
+                            <label class="spirit-pos-label"><i class="fa-solid fa-arrows-up-down"></i> Foco vertical (<span class="spirit-pos-val">${s.pos_y}%</span>)</label>
+                            <input type="range" class="spirit-pos-slider" min="0" max="100" step="5" value="${s.pos_y}" aria-label="Foco vertical da mídia">
+                        </div>
+                    ` : ''}
+                    <div class="spirit-resize-drag-handle" title="Arraste para cima ou para baixo para redimensionar a altura">
+                        <i class="fa-solid fa-arrows-up-down"></i> Arrastar altura (<span class="spirit-resize-px">${s.height}px</span>)
+                    </div>
+                </div>
+            `;
+        };
 
         const cardsHtml = validItems.map(item => {
             const captionHtml = item.caption
                 ? `<span class="spirit-media-caption">${escapeHtml(item.caption)}</span>`
                 : '';
+            const spanFullClass = item.sizing.width_mode === 'full' ? ' media-span-full' : '';
+            const inlineStyle = buildMediaInlineStyle(item.sizing);
+            const slugAttr = escapeHtml(cardSlug || '');
+            const idxAttr = item.origIndex;
 
             if (item.type === 'video') {
                 if (isVideoFileUrl(item.safeUrl)) {
                     return `
-                        <div class="spirit-media-item spirit-media-video">
-                            <video controls preload="metadata" playsinline src="${escapeHtml(item.safeUrl)}"></video>
+                        <div class="spirit-media-item spirit-media-video${spanFullClass}" data-slug="${slugAttr}" data-media-index="${idxAttr}">
+                            <video controls preload="metadata" playsinline src="${escapeHtml(item.safeUrl)}" style="${inlineStyle}"></video>
                             ${captionHtml}
+                            ${buildInlineResizerBar(item)}
                         </div>
                     `;
                 }
                 return `
-                    <a href="${escapeHtml(item.safeUrl)}" target="_blank" rel="noopener noreferrer" class="spirit-media-item spirit-media-external-video">
+                    <a href="${escapeHtml(item.safeUrl)}" target="_blank" rel="noopener noreferrer" class="spirit-media-item spirit-media-external-video${spanFullClass}">
                         <div class="spirit-external-play-badge"><i class="fa-solid fa-circle-play"></i></div>
                         <div class="spirit-external-video-meta">
                             <strong>Take / Vídeo do Jogo</strong>
@@ -455,10 +601,13 @@
             }
 
             return `
-                <button type="button" class="spirit-media-item spirit-media-image-btn" data-lightbox-src="${escapeHtml(item.safeUrl)}" data-lightbox-caption="${escapeHtml(item.caption || '')}">
-                    <img src="${escapeHtml(item.safeUrl)}" alt="${escapeHtml(item.caption || 'Registo Fúria Voleibol')}" loading="lazy">
-                    ${captionHtml}
-                </button>
+                <div class="spirit-media-item spirit-media-photo-card${spanFullClass}" data-slug="${slugAttr}" data-media-index="${idxAttr}">
+                    <button type="button" class="spirit-media-image-btn" data-lightbox-src="${escapeHtml(item.safeUrl)}" data-lightbox-caption="${escapeHtml(item.caption || '')}">
+                        <img src="${escapeHtml(item.safeUrl)}" alt="${escapeHtml(item.caption || 'Registo Fúria Voleibol')}" loading="lazy" style="${inlineStyle}">
+                        ${captionHtml}
+                    </button>
+                    ${buildInlineResizerBar(item)}
+                </div>
             `;
         }).join('');
 
@@ -498,7 +647,7 @@
                 : '';
 
             const gamesPreviewHtml = card.show_games_list ? buildSpiritGamesPreviewHtml() : '';
-            const mediaGalleryHtml = buildSpiritMediaHtml(card.media_items);
+            const mediaGalleryHtml = buildSpiritMediaHtml(card.media_items, card.slug);
             const hasRightColumn = Boolean(gamesPreviewHtml || mediaGalleryHtml);
 
             const editBtnHtml = isAdmin
@@ -589,15 +738,7 @@
             });
         });
 
-        spiritCardsGridEl.querySelectorAll('.spirit-media-image-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                openSpiritLightbox(
-                    btn.getAttribute('data-lightbox-src'),
-                    btn.getAttribute('data-lightbox-caption')
-                );
-            });
-        });
+        bindMediaGalleryEvents(spiritCardsGridEl, renderSpiritCards);
 
         if (isAdmin) {
             spiritCardsGridEl.querySelectorAll('.spirit-edit-btn').forEach(btn => {
@@ -610,6 +751,188 @@
         }
     }
 
+    function bindMediaGalleryEvents(rootEl, onRefresh) {
+        if (!rootEl) return;
+
+        rootEl.querySelectorAll('.spirit-media-image-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openSpiritLightbox(
+                    btn.getAttribute('data-lightbox-src'),
+                    btn.getAttribute('data-lightbox-caption')
+                );
+            });
+        });
+
+        if (!isAdminLogged()) return;
+
+        rootEl.querySelectorAll('.spirit-inline-resizer').forEach(barEl => {
+            const slug = barEl.getAttribute('data-slug');
+            const mediaIndex = Number(barEl.getAttribute('data-media-index'));
+            const itemEl = barEl.closest('.spirit-media-item');
+            const mediaEl = itemEl ? itemEl.querySelector('img, video') : null;
+
+            barEl.addEventListener('click', (e) => e.stopPropagation());
+
+            barEl.querySelectorAll('[data-resize-fit]').forEach(fitBtn => {
+                fitBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const nextFit = fitBtn.getAttribute('data-resize-fit');
+                    await persistInlineMediaResize(slug, mediaIndex, { fit: nextFit });
+                    if (typeof onRefresh === 'function') onRefresh();
+                });
+            });
+
+            const widthBtn = barEl.querySelector('[data-resize-width]');
+            if (widthBtn) {
+                widthBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const nextWidth = widthBtn.getAttribute('data-resize-width');
+                    await persistInlineMediaResize(slug, mediaIndex, { width_mode: nextWidth });
+                    if (typeof onRefresh === 'function') onRefresh();
+                });
+            }
+
+            const posSlider = barEl.querySelector('.spirit-pos-slider');
+            const posValEl = barEl.querySelector('.spirit-pos-val');
+            if (posSlider && mediaEl) {
+                posSlider.addEventListener('input', () => {
+                    const nextPos = Number(posSlider.value);
+                    mediaEl.style.objectPosition = `50% ${nextPos}%`;
+                    if (posValEl) posValEl.textContent = `${nextPos}%`;
+                });
+                posSlider.addEventListener('change', () => {
+                    persistInlineMediaResize(slug, mediaIndex, { pos_y: Number(posSlider.value) });
+                });
+            }
+
+            const dragHandle = barEl.querySelector('.spirit-resize-drag-handle');
+            const pxSpan = barEl.querySelector('.spirit-resize-px');
+            if (dragHandle && mediaEl) {
+                const startDrag = (startClientY) => {
+                    const sourceObj = slug === 'nossa_quadra'
+                        ? courtShowcase
+                        : spiritCards.find(c => c.slug === slug);
+                    const mediaObj = sourceObj && sourceObj.media_items && sourceObj.media_items[mediaIndex];
+                    const startSizing = getMediaSizing(mediaObj);
+                    let finalHeight = startSizing.height;
+                    dragHandle.classList.add('dragging');
+
+                    const onMove = (clientY) => {
+                        const deltaY = clientY - startClientY;
+                        finalHeight = Math.max(140, Math.min(640, Math.round(startSizing.height + deltaY)));
+                        applySizingToMediaElement(mediaEl, { ...startSizing, height: finalHeight });
+                        if (pxSpan) pxSpan.textContent = `${finalHeight}px`;
+                    };
+
+                    const handleMouseMove = (ev) => onMove(ev.clientY);
+                    const handleTouchMove = (ev) => {
+                        if (ev.touches && ev.touches[0]) {
+                            ev.preventDefault();
+                            onMove(ev.touches[0].clientY);
+                        }
+                    };
+
+                    const stopDrag = async () => {
+                        dragHandle.classList.remove('dragging');
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', stopDrag);
+                        document.removeEventListener('touchmove', handleTouchMove);
+                        document.removeEventListener('touchend', stopDrag);
+                        if (finalHeight !== startSizing.height) {
+                            await persistInlineMediaResize(slug, mediaIndex, { height: finalHeight });
+                        }
+                    };
+
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', stopDrag);
+                    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+                    document.addEventListener('touchend', stopDrag);
+                };
+
+                dragHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startDrag(e.clientY);
+                });
+
+                dragHandle.addEventListener('touchstart', (e) => {
+                    if (e.touches && e.touches[0]) {
+                        e.stopPropagation();
+                        startDrag(e.touches[0].clientY);
+                    }
+                }, { passive: true });
+            }
+        });
+    }
+
+    function renderCourtShowcase() {
+        if (!courtShowcaseContainerEl) return;
+
+        const isAdmin = isAdminLogged();
+        const data = courtShowcase || (window.FuriaDataService && window.FuriaDataService.getDefaultCourtShowcase
+            ? window.FuriaDataService.getDefaultCourtShowcase()
+            : null);
+
+        if (!data) {
+            courtShowcaseContainerEl.style.display = 'none';
+            courtShowcaseContainerEl.innerHTML = '';
+            return;
+        }
+
+        const mediaItems = Array.isArray(data.media_items) ? data.media_items : [];
+        if (!isAdmin && mediaItems.length === 0) {
+            courtShowcaseContainerEl.style.display = 'none';
+            courtShowcaseContainerEl.innerHTML = '';
+            return;
+        }
+
+        courtShowcaseContainerEl.style.display = 'block';
+        const galleryHtml = mediaItems.length > 0
+            ? buildSpiritMediaHtml(mediaItems, 'nossa_quadra')
+            : `
+                <div class="court-showcase-empty">
+                    <i class="fa-solid fa-route text-accent"></i>
+                    <div>
+                        <strong>Nenhum vídeo ou foto adicionado ainda</strong>
+                        <p>Adicione um vídeo mostrando o caminho até ao pavilhão e fotos da quadra para ajudar os novos jogadores.</p>
+                    </div>
+                    <button type="button" id="court-empty-add-media-btn" class="btn primary-btn btn-sm">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Adicionar Vídeo / Fotos
+                    </button>
+                </div>
+            `;
+
+        courtShowcaseContainerEl.innerHTML = `
+            <div class="court-showcase-card">
+                <div class="court-showcase-header">
+                    <div class="court-showcase-meta">
+                        ${data.badge ? `<span class="spirit-expanded-badge"><i class="fa-solid fa-route"></i> ${escapeHtml(data.badge)}</span>` : ''}
+                        <h3>${escapeHtml(data.title)}</h3>
+                        <p>${escapeHtml(data.content)}</p>
+                    </div>
+                    ${isAdmin ? `
+                        <button type="button" id="court-card-edit-btn" class="admin-action-btn spirit-edit-btn">
+                            <i class="fa-solid fa-pen-to-square"></i> Editar Mídia da Quadra
+                        </button>
+                    ` : ''}
+                </div>
+                ${galleryHtml}
+            </div>
+        `;
+
+        bindMediaGalleryEvents(courtShowcaseContainerEl, renderCourtShowcase);
+
+        const quickEditBtn = document.getElementById('court-card-edit-btn');
+        if (quickEditBtn) {
+            quickEditBtn.addEventListener('click', () => openSpiritEditModal('nossa_quadra'));
+        }
+        const emptyAddBtn = document.getElementById('court-empty-add-media-btn');
+        if (emptyAddBtn) {
+            emptyAddBtn.addEventListener('click', () => openSpiritEditModal('nossa_quadra'));
+        }
+    }
+
     function renderSpiritModalMediaList() {
         if (!spiritMediaListEl) return;
         if (!editingSpiritMedia.length) {
@@ -619,38 +942,132 @@
 
         spiritMediaListEl.innerHTML = editingSpiritMedia.map((item, index) => {
             const safeSrc = getSafeSpiritMediaSrc(item.url);
-            const previewBadge = item.type === 'video'
-                ? '<span class="spirit-media-kind-badge video"><i class="fa-solid fa-film"></i> Vídeo</span>'
-                : (safeSrc
-                    ? `<img src="${escapeHtml(safeSrc)}" alt="Pré-visualização" class="spirit-media-thumb">`
-                    : '<span class="spirit-media-kind-badge image"><i class="fa-solid fa-image"></i> Foto</span>');
+            const sizing = getMediaSizing(item);
+            const previewStyle = buildMediaInlineStyle(sizing, 0.58);
+            const isPlayableVideo = item.type === 'video' && isVideoFileUrl(safeSrc);
 
-            const labelText = item.caption || (item.url.startsWith('data:') ? 'Imagem carregada do dispositivo' : item.url);
+            let livePreviewHtml = '<span class="spirit-media-kind-badge image"><i class="fa-solid fa-image"></i> Foto</span>';
+            if (isPlayableVideo) {
+                livePreviewHtml = `<video src="${escapeHtml(safeSrc)}" controls muted preload="metadata" playsinline class="spirit-modal-live-video" style="${previewStyle}"></video>`;
+            } else if (item.type === 'video') {
+                livePreviewHtml = '<span class="spirit-media-kind-badge video"><i class="fa-solid fa-link"></i> Vídeo Externo</span>';
+            } else if (safeSrc) {
+                livePreviewHtml = `<img src="${escapeHtml(safeSrc)}" alt="Pré-visualização" class="spirit-modal-live-img" style="${previewStyle}">`;
+            }
 
             return `
-                <div class="spirit-media-admin-row">
-                    <div class="spirit-media-admin-info">
-                        ${previewBadge}
-                        <div class="spirit-media-admin-text">
-                            <strong>${item.type === 'video' ? 'Vídeo / Take' : 'Foto'}</strong>
-                            <span>${escapeHtml(labelText)}</span>
+                <div class="spirit-media-admin-row spirit-media-admin-card" data-modal-media-idx="${index}">
+                    <div class="spirit-media-admin-head">
+                        <div class="spirit-media-admin-info">
+                            <span class="spirit-media-kind-badge ${item.type === 'video' ? 'video' : 'image'}">
+                                <i class="fa-solid ${item.type === 'video' ? 'fa-film' : 'fa-image'}"></i>
+                                ${item.type === 'video' ? 'Vídeo / Take' : 'Foto'} #${index + 1}
+                            </span>
+                            <input type="text" class="spirit-modal-caption-input" value="${escapeHtml(item.caption || '')}" maxlength="160" placeholder="Legenda da foto ou vídeo (opcional)" aria-label="Legenda da mídia ${index + 1}">
+                        </div>
+                        <button type="button" class="admin-action-btn delete-game-btn spirit-remove-media-btn" data-media-index="${index}" title="Remover mídia">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+
+                    <div class="spirit-modal-live-preview">
+                        ${livePreviewHtml}
+                    </div>
+
+                    <div class="spirit-media-resizer-controls">
+                        <div class="spirit-resizer-field">
+                            <label>Altura: <strong class="spirit-modal-height-val">${sizing.height}px</strong></label>
+                            <input type="range" class="spirit-modal-height-slider" min="140" max="640" step="10" value="${sizing.height}">
+                        </div>
+                        <div class="spirit-resizer-field">
+                            <label>Ajuste</label>
+                            <select class="spirit-modal-fit-select">
+                                <option value="cover"${sizing.fit === 'cover' ? ' selected' : ''}>Preencher (Cover)</option>
+                                <option value="contain"${sizing.fit === 'contain' ? ' selected' : ''}>Mostrar Inteira (Sem corte)</option>
+                                <option value="auto"${sizing.fit === 'auto' ? ' selected' : ''}>Proporção Original (Auto)</option>
+                            </select>
+                        </div>
+                        <div class="spirit-resizer-field spirit-modal-pos-field"${sizing.fit !== 'cover' ? ' style="opacity:0.45;"' : ''}>
+                            <label>Foco Vertical: <strong class="spirit-modal-pos-val">${sizing.pos_y}%</strong></label>
+                            <input type="range" class="spirit-modal-pos-slider" min="0" max="100" step="5" value="${sizing.pos_y}"${sizing.fit !== 'cover' ? ' disabled' : ''}>
+                        </div>
+                        <div class="spirit-resizer-field">
+                            <label>Largura</label>
+                            <select class="spirit-modal-width-select">
+                                <option value="grid"${sizing.width_mode === 'grid' ? ' selected' : ''}>Grelha / Automática</option>
+                                <option value="full"${sizing.width_mode === 'full' ? ' selected' : ''}>Largura Total 100%</option>
+                            </select>
                         </div>
                     </div>
-                    <button type="button" class="admin-action-btn delete-game-btn spirit-remove-media-btn" data-media-index="${index}" title="Remover mídia">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
                 </div>
             `;
         }).join('');
 
-        spiritMediaListEl.querySelectorAll('.spirit-remove-media-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const idx = Number(btn.getAttribute('data-media-index'));
-                if (!Number.isNaN(idx)) {
+        spiritMediaListEl.querySelectorAll('.spirit-media-admin-card').forEach(cardEl => {
+            const idx = Number(cardEl.getAttribute('data-modal-media-idx'));
+            if (Number.isNaN(idx) || !editingSpiritMedia[idx]) return;
+
+            const previewMediaEl = cardEl.querySelector('.spirit-modal-live-img, .spirit-modal-live-video');
+            const captionInput = cardEl.querySelector('.spirit-modal-caption-input');
+            const heightSlider = cardEl.querySelector('.spirit-modal-height-slider');
+            const heightVal = cardEl.querySelector('.spirit-modal-height-val');
+            const fitSelect = cardEl.querySelector('.spirit-modal-fit-select');
+            const posField = cardEl.querySelector('.spirit-modal-pos-field');
+            const posSlider = cardEl.querySelector('.spirit-modal-pos-slider');
+            const posVal = cardEl.querySelector('.spirit-modal-pos-val');
+            const widthSelect = cardEl.querySelector('.spirit-modal-width-select');
+            const removeBtn = cardEl.querySelector('.spirit-remove-media-btn');
+
+            if (captionInput) {
+                captionInput.addEventListener('input', () => {
+                    editingSpiritMedia[idx].caption = captionInput.value.slice(0, 160);
+                });
+            }
+
+            if (heightSlider) {
+                heightSlider.addEventListener('input', () => {
+                    const nextH = Number(heightSlider.value);
+                    editingSpiritMedia[idx].height = nextH;
+                    if (heightVal) heightVal.textContent = `${nextH}px`;
+                    applySizingToMediaElement(previewMediaEl, getMediaSizing(editingSpiritMedia[idx]), 0.58);
+                });
+            }
+
+            if (fitSelect) {
+                fitSelect.addEventListener('change', () => {
+                    const nextFit = fitSelect.value;
+                    editingSpiritMedia[idx].fit = nextFit;
+                    const updatedSizing = getMediaSizing(editingSpiritMedia[idx]);
+                    applySizingToMediaElement(previewMediaEl, updatedSizing, 0.58);
+                    if (posField && posSlider) {
+                        const isCover = nextFit === 'cover';
+                        posField.style.opacity = isCover ? '1' : '0.45';
+                        posSlider.disabled = !isCover;
+                    }
+                });
+            }
+
+            if (posSlider) {
+                posSlider.addEventListener('input', () => {
+                    const nextPos = Number(posSlider.value);
+                    editingSpiritMedia[idx].pos_y = nextPos;
+                    if (posVal) posVal.textContent = `${nextPos}%`;
+                    applySizingToMediaElement(previewMediaEl, getMediaSizing(editingSpiritMedia[idx]), 0.58);
+                });
+            }
+
+            if (widthSelect) {
+                widthSelect.addEventListener('change', () => {
+                    editingSpiritMedia[idx].width_mode = widthSelect.value === 'full' ? 'full' : 'grid';
+                });
+            }
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
                     editingSpiritMedia.splice(idx, 1);
                     renderSpiritModalMediaList();
-                }
-            });
+                });
+            }
         });
     }
 
@@ -688,7 +1105,43 @@
         });
     }
 
+    function setSpiritModalCourtMode(isCourt) {
+        const titleInput = document.getElementById('spirit-title-input');
+        const titleCol = titleInput ? titleInput.closest('.form-group') : null;
+        const iconCol = document.getElementById('spirit-icon-select') ? document.getElementById('spirit-icon-select').closest('.form-group') : null;
+        const summaryInput = document.getElementById('spirit-summary-input');
+        const summaryCol = summaryInput ? summaryInput.closest('.form-group') : null;
+        const badgeCol = document.getElementById('spirit-badge-input') ? document.getElementById('spirit-badge-input').closest('.form-group') : null;
+        const highlightsCol = document.getElementById('spirit-highlights-input') ? document.getElementById('spirit-highlights-input').closest('.form-group') : null;
+        const gamesToggleBox = spiritForm ? spiritForm.querySelector('.spirit-games-toggle-box') : null;
+        const ctaLabelInput = document.getElementById('spirit-cta-label-input');
+        const ctaRow = ctaLabelInput ? ctaLabelInput.closest('.modal-form-row') : null;
+        const saveBtn = document.getElementById('save-spirit-btn');
+
+        if (iconCol) iconCol.style.display = isCourt ? 'none' : '';
+        if (titleCol) titleCol.style.gridColumn = isCourt ? 'span 12' : '';
+        if (summaryCol) summaryCol.style.display = isCourt ? 'none' : '';
+        if (summaryInput) summaryInput.required = !isCourt;
+        if (badgeCol) badgeCol.style.gridColumn = isCourt ? 'span 12' : '';
+        if (highlightsCol) highlightsCol.style.display = isCourt ? 'none' : '';
+        if (gamesToggleBox) gamesToggleBox.style.display = isCourt ? 'none' : '';
+        if (ctaRow) ctaRow.style.display = isCourt ? 'none' : '';
+
+        if (titleInput) {
+            titleInput.maxLength = isCourt ? 120 : 80;
+            titleInput.placeholder = isCourt ? 'Ex: Como Chegar & Conheça o Pavilhão' : 'Ex: Organização';
+        }
+        if (saveBtn) {
+            saveBtn.innerHTML = isCourt
+                ? '<i class="fa-solid fa-check"></i> Salvar Mídia da Quadra'
+                : '<i class="fa-solid fa-check"></i> Salvar Card';
+        }
+    }
+
     function populateSpiritModalFields(cardData) {
+        const isCourt = Boolean(cardData && cardData.slug === 'nossa_quadra');
+        setSpiritModalCourtMode(isCourt);
+
         document.getElementById('spirit-slug-input').value = cardData.slug || '';
         document.getElementById('spirit-title-input').value = cardData.title || '';
         document.getElementById('spirit-icon-select').value = getSafeSpiritIcon(cardData.icon);
@@ -710,7 +1163,10 @@
 
     function openSpiritEditModal(slug) {
         if (!isAdminLogged() || !spiritModalOverlay) return;
-        const found = spiritCards.find(c => c.slug === slug);
+        const isCourt = slug === 'nossa_quadra';
+        const found = isCourt
+            ? (courtShowcase || (window.FuriaDataService && window.FuriaDataService.getDefaultCourtShowcase ? window.FuriaDataService.getDefaultCourtShowcase() : null))
+            : spiritCards.find(c => c.slug === slug);
         if (!found) return;
 
         if (spiritFormFeedback) {
@@ -720,7 +1176,9 @@
         if (spiritMediaUrlInput) spiritMediaUrlInput.value = '';
         if (spiritMediaCaptionInput) spiritMediaCaptionInput.value = '';
         if (spiritModalTitle) {
-            spiritModalTitle.innerHTML = `<i class="fa-solid fa-pen-to-square text-accent"></i> Editar: ${escapeHtml(found.title)}`;
+            spiritModalTitle.innerHTML = isCourt
+                ? '<i class="fa-solid fa-map-location-dot text-accent"></i> Editar Mídia: Nossa Quadra (Caminho & Pavilhão)'
+                : `<i class="fa-solid fa-pen-to-square text-accent"></i> Editar: ${escapeHtml(found.title)}`;
         }
 
         populateSpiritModalFields(found);
@@ -1720,6 +2178,12 @@
             });
         }
 
+        if (openCourtMediaModalBtn) {
+            openCourtMediaModalBtn.addEventListener('click', () => {
+                openSpiritEditModal('nossa_quadra');
+            });
+        }
+
         if (closeSpiritModalBtn) closeSpiritModalBtn.addEventListener('click', closeSpiritEditModal);
         if (cancelSpiritModalBtn) cancelSpiritModalBtn.addEventListener('click', closeSpiritEditModal);
         if (spiritModalOverlay) {
@@ -1755,7 +2219,11 @@
                 editingSpiritMedia.push({
                     type: typeVal === 'video' ? 'video' : 'image',
                     url: safeSrc,
-                    caption: captionVal
+                    caption: captionVal,
+                    height: 280,
+                    fit: 'cover',
+                    width_mode: 'grid',
+                    pos_y: 35
                 });
                 if (spiritMediaUrlInput) spiritMediaUrlInput.value = '';
                 if (spiritMediaCaptionInput) spiritMediaCaptionInput.value = '';
@@ -1765,26 +2233,74 @@
 
         if (spiritMediaFileInput) {
             spiritMediaFileInput.addEventListener('change', async (e) => {
-                const file = e.target && e.target.files && e.target.files[0];
-                if (!file) return;
+                const files = e.target && e.target.files ? Array.from(e.target.files) : [];
+                if (!files.length) return;
+
+                if (spiritFormFeedback) {
+                    spiritFormFeedback.style.display = 'none';
+                    spiritFormFeedback.textContent = '';
+                }
+
+                const uploadLabel = document.querySelector('label[for="spirit-media-file-input"]');
+                const originalLabelHtml = uploadLabel ? uploadLabel.innerHTML : '';
+                if (uploadLabel) {
+                    uploadLabel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando para o Supabase...';
+                    uploadLabel.style.pointerEvents = 'none';
+                }
+
+                const slug = (document.getElementById('spirit-slug-input') && document.getElementById('spirit-slug-input').value) || 'geral';
+                const customCaption = spiritMediaCaptionInput ? spiritMediaCaptionInput.value.trim() : '';
+
                 try {
-                    const dataUrl = await compressImageFile(file);
-                    const captionVal = spiritMediaCaptionInput && spiritMediaCaptionInput.value.trim()
-                        ? spiritMediaCaptionInput.value.trim()
-                        : file.name.replace(/\.[^.]+$/, '');
-                    editingSpiritMedia.push({
-                        type: 'image',
-                        url: dataUrl,
-                        caption: captionVal.slice(0, 160)
-                    });
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        let uploaded = null;
+
+                        if (window.FuriaDataService && window.FuriaDataService.isCloudActive() && window.FuriaDataService.uploadSpiritMedia) {
+                            try {
+                                uploaded = await window.FuriaDataService.uploadSpiritMedia(file, slug);
+                            } catch (cloudErr) {
+                                if (file.type && file.type.startsWith('image/') && !navigator.onLine) {
+                                    const dataUrl = await compressImageFile(file);
+                                    uploaded = { type: 'image', url: dataUrl };
+                                } else {
+                                    throw cloudErr;
+                                }
+                            }
+                        } else if (file.type && file.type.startsWith('image/')) {
+                            const dataUrl = await compressImageFile(file);
+                            uploaded = { type: 'image', url: dataUrl };
+                        } else {
+                            throw new Error('É necessário estar conectado ao Supabase para enviar vídeos.');
+                        }
+
+                        const itemCaption = (files.length === 1 && customCaption)
+                            ? customCaption
+                            : (customCaption ? `${customCaption} (${i + 1})` : file.name.replace(/\.[^.]+$/, ''));
+
+                        editingSpiritMedia.push({
+                            type: uploaded.type,
+                            url: uploaded.url,
+                            caption: itemCaption.slice(0, 160),
+                            height: 280,
+                            fit: 'cover',
+                            width_mode: 'grid',
+                            pos_y: 35
+                        });
+                    }
+
                     if (spiritMediaCaptionInput) spiritMediaCaptionInput.value = '';
                     renderSpiritModalMediaList();
                 } catch (err) {
                     if (spiritFormFeedback) {
                         spiritFormFeedback.style.display = 'block';
-                        spiritFormFeedback.textContent = err.message || 'Erro ao carregar imagem.';
+                        spiritFormFeedback.textContent = err.message || 'Erro ao carregar ficheiro(s).';
                     }
                 } finally {
+                    if (uploadLabel) {
+                        uploadLabel.innerHTML = originalLabelHtml;
+                        uploadLabel.style.pointerEvents = '';
+                    }
                     spiritMediaFileInput.value = '';
                 }
             });
@@ -1793,7 +2309,9 @@
         if (spiritRestoreDefaultBtn && window.FuriaDataService.getDefaultSpiritCards) {
             spiritRestoreDefaultBtn.addEventListener('click', () => {
                 const slug = document.getElementById('spirit-slug-input').value;
-                const def = window.FuriaDataService.getDefaultSpiritCards().find(c => c.slug === slug);
+                const def = slug === 'nossa_quadra'
+                    ? (window.FuriaDataService.getDefaultCourtShowcase ? window.FuriaDataService.getDefaultCourtShowcase() : null)
+                    : window.FuriaDataService.getDefaultSpiritCards().find(c => c.slug === slug);
                 if (def) {
                     populateSpiritModalFields(def);
                 }
@@ -1805,6 +2323,7 @@
                 e.preventDefault();
                 const saveBtn = document.getElementById('save-spirit-btn');
                 const slug = document.getElementById('spirit-slug-input').value;
+                const isCourt = slug === 'nossa_quadra';
 
                 // Se o utilizador digitou um URL de mídia mas esqueceu de clicar em "+ Adicionar Mídia", inclui automaticamente
                 const pendingUrl = spiritMediaUrlInput ? spiritMediaUrlInput.value.trim() : '';
@@ -1814,29 +2333,16 @@
                         editingSpiritMedia.push({
                             type: spiritMediaTypeSelect && spiritMediaTypeSelect.value === 'video' ? 'video' : 'image',
                             url: pendingSafe,
-                            caption: spiritMediaCaptionInput ? spiritMediaCaptionInput.value.trim() : ''
+                            caption: spiritMediaCaptionInput ? spiritMediaCaptionInput.value.trim() : '',
+                            height: 280,
+                            fit: 'cover',
+                            width_mode: 'grid',
+                            pos_y: 35
                         });
                         spiritMediaUrlInput.value = '';
                         if (spiritMediaCaptionInput) spiritMediaCaptionInput.value = '';
                     }
                 }
-
-                const payload = {
-                    slug,
-                    title: document.getElementById('spirit-title-input').value,
-                    icon: document.getElementById('spirit-icon-select').value,
-                    summary: document.getElementById('spirit-summary-input').value,
-                    badge: document.getElementById('spirit-badge-input').value,
-                    content: document.getElementById('spirit-content-input').value,
-                    highlights: document.getElementById('spirit-highlights-input').value
-                        .split(/\r?\n/)
-                        .map(s => s.trim())
-                        .filter(Boolean),
-                    show_games_list: document.getElementById('spirit-show-games-checkbox').checked,
-                    media_items: editingSpiritMedia.map(m => ({ ...m })),
-                    cta_label: document.getElementById('spirit-cta-label-input').value,
-                    cta_url: document.getElementById('spirit-cta-url-input').value
-                };
 
                 try {
                     if (saveBtn) {
@@ -1844,26 +2350,58 @@
                         saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
                     }
 
-                    const saved = await window.FuriaDataService.saveSpiritCard(payload);
-                    const idx = spiritCards.findIndex(c => c.slug === saved.slug);
-                    if (idx >= 0) {
-                        spiritCards[idx] = saved;
+                    if (isCourt) {
+                        const courtPayload = {
+                            slug: 'nossa_quadra',
+                            title: document.getElementById('spirit-title-input').value,
+                            badge: document.getElementById('spirit-badge-input').value,
+                            content: document.getElementById('spirit-content-input').value,
+                            media_items: editingSpiritMedia.map(m => ({ ...m }))
+                        };
+                        courtShowcase = await window.FuriaDataService.saveCourtShowcase(courtPayload);
+                        closeSpiritEditModal();
+                        renderCourtShowcase();
                     } else {
-                        spiritCards.push(saved);
-                    }
+                        const payload = {
+                            slug,
+                            title: document.getElementById('spirit-title-input').value,
+                            icon: document.getElementById('spirit-icon-select').value,
+                            summary: document.getElementById('spirit-summary-input').value,
+                            badge: document.getElementById('spirit-badge-input').value,
+                            content: document.getElementById('spirit-content-input').value,
+                            highlights: document.getElementById('spirit-highlights-input').value
+                                .split(/\r?\n/)
+                                .map(s => s.trim())
+                                .filter(Boolean),
+                            show_games_list: document.getElementById('spirit-show-games-checkbox').checked,
+                            media_items: editingSpiritMedia.map(m => ({ ...m })),
+                            cta_label: document.getElementById('spirit-cta-label-input').value,
+                            cta_url: document.getElementById('spirit-cta-url-input').value
+                        };
 
-                    expandedSpiritSlug = saved.slug;
-                    closeSpiritEditModal();
-                    renderSpiritCards();
+                        const saved = await window.FuriaDataService.saveSpiritCard(payload);
+                        const idx = spiritCards.findIndex(c => c.slug === saved.slug);
+                        if (idx >= 0) {
+                            spiritCards[idx] = saved;
+                        } else {
+                            spiritCards.push(saved);
+                        }
+
+                        expandedSpiritSlug = saved.slug;
+                        closeSpiritEditModal();
+                        renderSpiritCards();
+                    }
                 } catch (err) {
                     if (spiritFormFeedback) {
                         spiritFormFeedback.style.display = 'block';
-                        spiritFormFeedback.textContent = err.message || 'Erro ao salvar o card.';
+                        spiritFormFeedback.textContent = err.message || 'Erro ao salvar o conteúdo.';
                     }
                 } finally {
                     if (saveBtn) {
                         saveBtn.disabled = false;
-                        saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Salvar Card';
+                        saveBtn.innerHTML = isCourt
+                            ? '<i class="fa-solid fa-check"></i> Salvar Mídia da Quadra'
+                            : '<i class="fa-solid fa-check"></i> Salvar Card';
                     }
                 }
             });
